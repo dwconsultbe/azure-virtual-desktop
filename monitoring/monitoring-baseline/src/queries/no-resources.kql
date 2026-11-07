@@ -1,0 +1,8 @@
+let UnavailableErrors = WVDErrors
+| where TimeGenerated > ago(15m) and _ResourceId =~ '__HOST_POOL_ID__'
+| where CodeSymbolic == 'ConnectionFailedNoHealthyRdshAvailable'
+| distinct CorrelationId;
+WVDConnections
+| where TimeGenerated > ago(15m) and _ResourceId =~ '__HOST_POOL_ID__'
+| join kind=inner UnavailableErrors on CorrelationId
+| project UserName, SessionHostName

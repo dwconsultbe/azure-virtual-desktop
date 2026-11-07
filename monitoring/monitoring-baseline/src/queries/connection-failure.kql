@@ -1,0 +1,11 @@
+let RecentErrors = WVDErrors
+| where TimeGenerated > ago(15m) and _ResourceId =~ '__HOST_POOL_ID__'
+__IGNORED_FILTER__| summarize arg_max(TimeGenerated, CodeSymbolic) by CorrelationId;
+WVDConnections
+| where TimeGenerated > ago(15m) and _ResourceId =~ '__HOST_POOL_ID__'
+| summarize arg_max(TimeGenerated, *) by CorrelationId
+| join kind=inner RecentErrors on CorrelationId
+| extend ErrorShort = tostring(CodeSymbolic)
+| summarize Failures = dcount(CorrelationId), Users = dcount(UserName), Hosts = dcount(SessionHostName), SessionHosts = make_set(SessionHostName, 5) by ErrorShort
+| where Failures >= __MIN_FAILURES__ and Users >= __MIN_USERS__
+| project ErrorShort, Failures, Users, Hosts, SessionHosts

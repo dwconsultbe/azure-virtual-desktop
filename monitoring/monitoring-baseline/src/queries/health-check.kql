@@ -1,0 +1,17 @@
+let CheckName = (idx: long) {
+  case(idx == 0, 'DomainJoin', idx == 1, 'DomainTrust', idx == 2, 'FSLogix', idx == 3, 'SxSStack',
+       idx == 4, 'URLCheck', idx == 5, 'GenevaAgent', idx == 6, 'DomainReachable',
+       idx == 7, 'WebRTCRedirector', idx == 8, 'SxSStackEncryption', idx == 9, 'IMDSReachable',
+       idx == 10, 'MSIXPackageStaging', idx == 11, 'TURNRelayAccessHealthCheck',
+       idx == 19, 'AADJoinedHealthCheck', 'InvalidIndex')
+};
+WVDAgentHealthStatus
+| where TimeGenerated > ago(15m) and _ResourceId =~ '__HOST_POOL_ID__'
+| where Status != 'Available' and AllowNewSessions =~ 'True'
+| extend FailedCheck = parse_json(SessionHostHealthCheckResult)
+| mv-expand FailedCheck
+| where tolong(FailedCheck.AdditionalFailureDetails.ErrorCode) != 0
+| extend HealthCheckDesc = CheckName(tolong(FailedCheck.HealthCheckName))
+| where HealthCheckDesc != 'InvalidIndex'
+| extend SessionHostRG = tostring(split(SessionHostResourceId, '/')[4])
+| project SessionHostName, SessionHostRG, HealthCheckDesc

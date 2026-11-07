@@ -1,0 +1,9 @@
+let AgentHealthRows = toscalar(WVDAgentHealthStatus
+| where TimeGenerated > ago(1h) and _ResourceId =~ '__HOST_POOL_ID__'
+| count);
+__COLLECTOR_ROWS__
+| where TimeGenerated > ago(1h)
+| extend UserSessionsTotal = toint(Fields[5])
+| summarize RunCount = count(), RunsWithSessions = countif(UserSessionsTotal > 0) by HostPoolName
+| where RunCount >= 3 and RunsWithSessions == RunCount and AgentHealthRows == 0
+| project HostPoolName

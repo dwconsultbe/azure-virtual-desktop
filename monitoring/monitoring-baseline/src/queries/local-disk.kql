@@ -1,0 +1,9 @@
+__HOST_POOL_VMS__
+Perf
+| where TimeGenerated > ago(15m)
+| where ObjectName == 'LogicalDisk' and CounterName == '% Free Space'
+| where InstanceName !in~ ('D:', '_Total')
+| extend VMResourceId = tolower(_ResourceId)
+| summarize FreePercent = round(avg(CounterValue), 1) by VMResourceId, InstanceName
+| join kind=inner HostPoolVMs on VMResourceId
+| project SessionHostName, Disk = InstanceName, FreePercent

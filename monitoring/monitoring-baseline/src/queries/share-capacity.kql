@@ -1,0 +1,9 @@
+AzureDiagnostics
+| where Category has 'JobStreams' and StreamType_s == 'Output' and RunbookName_s == '__RUNBOOK__'
+| extend Fields = split(ResultDescription, ',')
+| extend StorageAccount = tostring(Fields[3]), Share = tostring(Fields[4]), ResourceId = tostring(Fields[8])
+| where ResourceId startswith '__STORAGE_ID__/'
+| extend PercentAvailable = toreal(Fields[7])
+| summarize arg_max(TimeGenerated, *) by ResourceId
+| where isnotnull(PercentAvailable)
+| project ResourceId, StorageAccount, Share, PercentAvailable

@@ -1,0 +1,7 @@
+__COLLECTOR_ROWS__
+| where TimeGenerated > ago(20m)
+| where tostring(Fields[2]) == 'Pooled'
+| extend HostPoolPercentLoad = toreal(Fields[9])
+| summarize arg_max(TimeGenerated, *) by HostPoolResourceId
+| where isnotnull(HostPoolPercentLoad)
+| project HostPoolName, HostPoolPercentLoad

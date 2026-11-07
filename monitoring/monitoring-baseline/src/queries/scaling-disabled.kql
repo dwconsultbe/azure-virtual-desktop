@@ -1,0 +1,6 @@
+__COLLECTOR_ROWS__
+| where TimeGenerated > ago(__HOURS__h)
+| extend ScalingPlanName = trim(@'\s', tostring(Fields[13])), ScalingPlanState = trim(@'\s', tostring(Fields[14]))
+| summarize RunCount = count(), DisabledRuns = countif(ScalingPlanState == 'Disabled'), ScalingPlanName = take_anyif(ScalingPlanName, ScalingPlanState == 'Disabled') by HostPoolName
+| where RunCount >= __MIN_RUNS__ and DisabledRuns == RunCount
+| project HostPoolName, ScalingPlanName

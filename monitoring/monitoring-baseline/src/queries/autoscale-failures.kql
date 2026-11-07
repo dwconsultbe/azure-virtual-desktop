@@ -1,0 +1,19 @@
+let Evaluations = WVDAutoscaleEvaluationPooled
+| where TimeGenerated > ago(1h)
+| where _ResourceId =~ '__HOST_POOL_ID__';
+let LastFailure = Evaluations
+| where ResultType != 'Succeeded'
+| summarize arg_max(TimeGenerated, CorrelationId) by _ResourceId
+| join kind=leftouter (WVDErrors
+    | where TimeGenerated > ago(1h)
+    | summarize arg_max(TimeGenerated, CodeSymbolic) by CorrelationId) on CorrelationId
+| project _ResourceId, LastErrorCode = coalesce(CodeSymbolic, 'See WVDErrors');
+Evaluations
+| summarize EvaluationCount = count(),
+    FailedCount = countif(ResultType != 'Succeeded'),
+    ScalingPlanResourceId = take_any(ScalingPlanResourceId)
+    by _ResourceId
+| where FailedCount >= 2 and FailedCount == EvaluationCount
+| join kind=inner LastFailure on _ResourceId
+| extend ScalingPlanName = tostring(split(ScalingPlanResourceId, '/')[-1])
+| project ScalingPlanName, FailedCount, LastErrorCode

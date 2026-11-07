@@ -1,0 +1,5 @@
+AzureDiagnostics
+| where Category has 'JobStreams' and StreamType_s == 'Output' and RunbookName_s == '__RUNBOOK__'
+| extend Fields = split(ResultDescription, '|')
+| extend HostPoolName = tostring(Fields[0]), HostPoolResourceId = tostring(Fields[12])
+| where HostPoolResourceId =~ '__HOST_POOL_ID__'

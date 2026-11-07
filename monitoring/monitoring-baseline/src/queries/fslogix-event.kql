@@ -1,0 +1,8 @@
+__HOST_POOL_VMS__
+Event
+| where TimeGenerated > ago(__WINDOW__)
+| where EventLog == 'Microsoft-FSLogix-Apps/Admin'
+| where EventLevelName == '__LEVEL__' and EventID in (__EVENT_IDS__)
+| extend VMResourceId = tolower(_ResourceId)
+| join kind=inner HostPoolVMs on VMResourceId
+__OUTPUT__

@@ -1,0 +1,9 @@
+__COLLECTOR_ROWS__
+| where TimeGenerated > ago(45m)
+| where tostring(Fields[2]) == 'Personal' and toint(Fields[10]) > 0
+| mv-expand Host = parse_json(tostring(Fields[11]))
+| extend PersonalSessionHost = tostring(Host.SessionHost), PersonalAssignedUser = tostring(Host.AssignedUser), HostStatus = tostring(Host.Status)
+| where isnotempty(PersonalSessionHost)
+| summarize Runs = count(), LastSeen = max(TimeGenerated), HostStatus = take_any(HostStatus) by HostPoolName, PersonalSessionHost, PersonalAssignedUser
+| where Runs >= 2 and LastSeen > ago(20m)
+| project HostPoolName, PersonalSessionHost, PersonalAssignedUser, HostStatus

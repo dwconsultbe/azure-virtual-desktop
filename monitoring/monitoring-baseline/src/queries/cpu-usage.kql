@@ -1,0 +1,10 @@
+__HOST_POOL_VMS__
+Perf
+| where TimeGenerated > ago(1h)
+| where ObjectName in~ ('Processor', 'Processor Information')
+| where CounterName == '% Processor Time'
+| where InstanceName in~ ('_Total', '_total')
+| extend VMResourceId = tolower(_ResourceId)
+| summarize CpuPercent = round(avg(CounterValue), 1) by VMResourceId
+| join kind=inner HostPoolVMs on VMResourceId
+| project SessionHostName, CpuPercent

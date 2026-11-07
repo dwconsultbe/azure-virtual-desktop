@@ -1,0 +1,8 @@
+__HOST_POOL_VMS__
+Event
+| where TimeGenerated > ago(30m)
+| where EventLog == 'Microsoft-FSLogix-Apps/Operational' and EventID == 51
+| extend VMResourceId = tolower(_ResourceId)
+| join kind=inner HostPoolVMs on VMResourceId
+| extend ProfilePath = extract(@"<Param>([\\][^<]+\.VHDX?)<\/Param>", 1, ParameterXml)
+| project SessionHostName, UserName, ProfilePath

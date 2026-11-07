@@ -1,0 +1,10 @@
+let Expected = datatable(RunbookName_s: string) [__RUNBOOKS__];
+Expected
+| join kind=leftouter (
+    AzureDiagnostics
+    | where TimeGenerated > ago(2h)
+    | where Category has 'JobStreams' and StreamType_s == 'Output'
+    | summarize LastRun = max(TimeGenerated) by RunbookName_s
+  ) on RunbookName_s
+| where isnull(LastRun) or LastRun < ago(45m)
+| project RunbookName_s, LastRun

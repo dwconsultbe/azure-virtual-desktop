@@ -1,0 +1,12 @@
+WVDAgentHealthStatus
+| where TimeGenerated > ago(1h)
+| where _ResourceId =~ '__HOST_POOL_ID__'
+| summarize arg_max(TimeGenerated, *) by SessionHostName
+| where AllowNewSessions =~ 'True'
+| extend UpgradeFailed = Status in~ ('UpgradeFailed', 'Upgrade Failed') or UpgradeState =~ 'Failed'
+| extend UpgradeStuck = Status =~ 'Upgrading'
+| where (UpgradeFailed and (isnull(LastUpgradeTimeStamp) or LastUpgradeTimeStamp < ago(1h)))
+    or (UpgradeStuck and LastUpgradeTimeStamp < ago(2h))
+| extend Problem = iff(UpgradeStuck, 'Stuck upgrading', 'Upgrade failed')
+| extend SessionHostRG = tostring(split(SessionHostResourceId, '/')[4])
+| project SessionHostName, SessionHostRG, Problem

@@ -1,0 +1,6 @@
+AzureDiagnostics
+| where TimeGenerated > ago(30m)
+| where ResourceProvider == 'MICROSOFT.AUTOMATION' and Category == 'JobLogs'
+| where RunbookName_s in~ (__RUNBOOKS__)
+| where ResultType in~ ('Failed', 'Suspended')
+| project RunbookName_s, ResultType

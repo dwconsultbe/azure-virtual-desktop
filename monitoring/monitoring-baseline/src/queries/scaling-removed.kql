@@ -1,0 +1,14 @@
+let RunbookRuns = __COLLECTOR_ROWS__
+| where TimeGenerated > ago(6h)
+| extend ScalingPlanName = trim(@'\s', tostring(Fields[13])), ScalingPlanState = trim(@'\s', tostring(Fields[14]));
+let LastWithPlan = RunbookRuns
+| where ScalingPlanState in ('Enabled', 'Disabled')
+| summarize arg_max(TimeGenerated, ScalingPlanName) by HostPoolResourceId, HostPoolName;
+let RecentRuns = RunbookRuns
+| where TimeGenerated > ago(4h)
+| summarize RunCount = count(), NoPlanRuns = countif(ScalingPlanState == 'None') by HostPoolResourceId;
+LastWithPlan
+| join kind=inner RecentRuns on HostPoolResourceId
+| where RunCount >= 12 and NoPlanRuns == RunCount
+| where TimeGenerated between (ago(310m) .. ago(4h))
+| project HostPoolName, RemovedScalingPlan = ScalingPlanName, LastSeenWithPlan = tostring(TimeGenerated)

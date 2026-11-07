@@ -1,0 +1,4 @@
+let HostPoolVMs = WVDAgentHealthStatus
+| where TimeGenerated > ago(1h) and _ResourceId =~ '__HOST_POOL_ID__'
+| summarize arg_max(TimeGenerated, SessionHostName) by SessionHostResourceId
+| project VMResourceId = tolower(SessionHostResourceId), SessionHostName;

@@ -1,0 +1,14 @@
+WVDAgentHealthStatus
+| where TimeGenerated > ago(24h)
+| where _ResourceId =~ '__HOST_POOL_ID__'
+| summarize RowCount = count(),
+    DrainedRows = countif(AllowNewSessions =~ 'False'),
+    MaxSessions = max(toint(ActiveSessions) + toint(InactiveSessions)),
+    HoursReporting = dcount(bin(TimeGenerated, 1h)),
+    LastSeen = max(TimeGenerated),
+    SessionHostResourceId = take_any(SessionHostResourceId)
+    by SessionHostName
+| where DrainedRows == RowCount and MaxSessions == 0
+| where HoursReporting >= 22 and LastSeen > ago(1h)
+| extend SessionHostRG = tostring(split(SessionHostResourceId, '/')[4])
+| project SessionHostName, SessionHostRG

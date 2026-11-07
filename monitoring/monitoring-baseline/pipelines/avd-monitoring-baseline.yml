@@ -1,0 +1,160 @@
+trigger: none
+pr: none
+
+# Deploys the AVD monitoring baseline (alert rules + in-repository collectors).
+#
+# Flow:  build  ->  whatif  ->  deploy (manual approval on the environment)
+#   build  : compiles Bicep, checks the parameter file, runs the collector tests. No Azure access needed.
+#   whatif : subscription what-if; the output is published as pipeline artifact 'what-if'.
+#   deploy : runs only after an approver has reviewed the what-if (approval check on the environment).
+#
+# One-time setup in Azure DevOps: Pipelines > Environments > 'avd-monitoring-baseline' > Approvals and checks > Approvals.
+
+variables:
+  # The project lives in a subfolder of the repository, so every step sets workingDirectory to it.
+  projectDir: $(System.DefaultWorkingDirectory)/monitoring/monitoring-baseline
+  templateFile: src/main.bicep
+  environmentName: avd-monitoring-baseline
+  parameterFile: parameters/main.example.bicepparam
+  # Override this pipeline variable with the exact Azure DevOps service connection name.
+  serviceConnection: ''
+
+pool:
+  vmImage: ubuntu-24.04
+
+stages:
+  - stage: build
+    displayName: Build and test
+    jobs:
+      - job: build_and_test
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - pwsh: |
+              $ErrorActionPreference = 'Stop'
+              $file = $env:PARAMETER_FILE
+              if ([string]::IsNullOrWhiteSpace($file)) {
+                throw 'Configure the parameterFile pipeline variable before running this pipeline.'
+              }
+              $cwd = (Get-Location).Path
+              if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+                throw "Parameter file not found: $file (working directory: $cwd)"
+              }
+              $resolved = (Resolve-Path -LiteralPath $file).Path
+              if (-not $resolved.StartsWith($cwd + [System.IO.Path]::DirectorySeparatorChar)) {
+                throw "Parameter file must be located inside the project folder: $cwd"
+              }
+              # Ignore comment lines; only real values may not contain placeholders.
+              $content = Get-Content -LiteralPath $file | Where-Object { $_ -notmatch '^\s*//' }
+              if (($content -join "`n") -match 'REPLACE_') {
+                throw "Parameter file still contains REPLACE_ placeholders: $file"
+              }
+            displayName: Validate deployment parameter file
+            workingDirectory: $(projectDir)
+            env:
+              PARAMETER_FILE: '$(parameterFile)'
+
+          - pwsh: |
+              $ErrorActionPreference = 'Stop'
+              az bicep install --only-show-errors
+              if ($LASTEXITCODE -ne 0) { throw 'Pinned Bicep installation failed.' }
+              az bicep build --file '$(templateFile)' --stdout | Out-Null
+              if ($LASTEXITCODE -ne 0) { throw 'Bicep build failed.' }
+              az bicep build --file src/collector-schedules.bicep --stdout | Out-Null
+              if ($LASTEXITCODE -ne 0) { throw 'Collector schedule Bicep build failed.' }
+
+              $built = & ./pipelines/scripts/Get-BuiltParameters.ps1 -ParameterFile $env:PARAMETER_FILE
+              # Inspect compiled parameter values, not source comments.
+              if (($built.parameters | ConvertTo-Json -Depth 100 -Compress) -match 'REPLACE_') {
+                throw "Configure $($env:PARAMETER_FILE) before running Azure what-if."
+              }
+              $createActionGroup = [bool]$built.parameters.createActionGroup.value
+              $existingActionGroup = $built.parameters.existingActionGroup.value
+              if (-not $createActionGroup -and [string]::IsNullOrWhiteSpace([string]$existingActionGroup.name)) {
+                throw 'Set existingActionGroup details or set createActionGroup to true.'
+              }
+            displayName: Build Bicep and check parameters
+            workingDirectory: $(projectDir)
+            env:
+              PARAMETER_FILE: '$(parameterFile)'
+
+          - pwsh: |
+              $ErrorActionPreference = 'Stop'
+              foreach ($script in @('collect-host-pools.ps1', 'collect-azure-files.ps1')) {
+                $path = Join-Path src/scripts $script
+                $parseErrors = $null
+                [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$parseErrors) | Out-Null
+                if ($parseErrors) { throw "PowerShell syntax failed in ${path}: $($parseErrors[0].Message)" }
+              }
+              & (Join-Path (Get-Location) 'tests/collector-contract.ps1')
+            displayName: Check collector scripts and run contract test
+            workingDirectory: $(projectDir)
+
+  - stage: whatif
+    displayName: What-if
+    dependsOn: build
+    jobs:
+      - job: what_if
+        steps:
+          - checkout: self
+            fetchDepth: 1
+
+          - task: AzureCLI@2
+            displayName: Run subscription what-if
+            inputs:
+              azureSubscription: $(serviceConnection)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              workingDirectory: $(projectDir)
+              inlineScript: |
+                $ErrorActionPreference = 'Stop'
+                az bicep install --only-show-errors
+                if ($LASTEXITCODE -ne 0) { throw 'Pinned Bicep installation failed.' }
+                $built = & ./pipelines/scripts/Get-BuiltParameters.ps1 -ParameterFile $env:PARAMETER_FILE
+                $location = $built.parameters.location.value
+                $outFile = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'what-if.txt'
+                New-Item -ItemType File -Path $outFile -Force | Out-Null
+                az deployment sub what-if `
+                  --name avd-monitoring-$(Build.BuildId) `
+                  --location $location `
+                  --parameters $env:PARAMETER_FILE `
+                  2>&1 | Tee-Object -FilePath $outFile
+                if ($LASTEXITCODE -ne 0) { throw 'Azure what-if failed.' }
+            env:
+              PARAMETER_FILE: '$(parameterFile)'
+
+          - publish: $(Build.ArtifactStagingDirectory)/what-if.txt
+            artifact: what-if
+            displayName: Publish what-if output
+            condition: succeededOrFailed()
+
+  - stage: deploy
+    displayName: Deploy AVD monitoring
+    dependsOn: whatif
+    jobs:
+      - deployment: deploy_alerts
+        displayName: Deploy alerts, runbooks and schedules
+        # Configure the approval on this environment so the what-if is reviewed before anything changes.
+        environment: $(environmentName)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                  fetchDepth: 1
+
+                - task: AzureCLI@2
+                  displayName: Deploy subscription template
+                  inputs:
+                    azureSubscription: $(serviceConnection)
+                    scriptType: pscore
+                    scriptLocation: inlineScript
+                    workingDirectory: $(projectDir)
+                    inlineScript: |
+                      & ./pipelines/scripts/Deploy-MonitoringBaseline.ps1 `
+                      -ParameterFile $env:PARAMETER_FILE `
+                      -DeploymentName avd-monitoring-$(Build.BuildId) `
+                      -ScheduleDeploymentName avd-collector-schedules-$(Build.BuildId)
+                  env:
+                    PARAMETER_FILE: '$(parameterFile)'

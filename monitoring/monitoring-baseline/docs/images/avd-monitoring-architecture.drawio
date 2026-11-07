@@ -1,0 +1,144 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="7Wf9FC4qeRbbwfAhgFL1">
+    <mxGraphModel dx="2291" dy="1046" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="section-monitoring" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#a9d5b7;align=left;verticalAlign=top;spacingTop=8;spacingLeft=12;fontSize=13;fontStyle=1;fontColor=#26643a;" value="Monitoring and alerting" vertex="1">
+          <mxGeometry height="240" width="815" x="645" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="section-avd" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9ec5ef;align=left;verticalAlign=top;spacingTop=8;spacingLeft=12;fontSize=13;fontStyle=1;fontColor=#1d4f7a;" value="AVD platform" vertex="1">
+          <mxGeometry height="485" width="472" x="-122" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-2" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/compute/Host_Pools.svg;points=[[0.499,0,0],[0.5,1,0],[0,0.5,0],[1,0.501,0],[0.842,0.133,0],[0.865,0.845,0],[0.135,0.845,0],[0.148,0.143,0]];labelPerimeter=1;" value="Host Pools" vertex="1">
+          <mxGeometry height="68" width="68" x="70" y="192" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-3" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/compute/Virtual_Machine.svg;points=[[0.5,0,0],[0.5,1,0],[0,0.5,0],[1,0.5,0],[0.985,0.006,0],[0.75,1,0],[0.25,1,0],[0.015,0.006,0]];labelPerimeter=1;" value="Session Host" vertex="1">
+          <mxGeometry height="63.07" width="68" x="71.5" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-4" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/storage/Storage_Accounts.svg;points=[[0.5,0,0],[0.5,1,0],[0.003,0.5,0],[0.998,0.5,0],[0.985,0.007,0],[0.985,0.993,0],[0.015,0.993,0],[0.015,0.007,0]];labelPerimeter=1;" value="Storage Account&lt;br&gt;FSLogix" vertex="1">
+          <mxGeometry height="52" width="65" x="73" y="544" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-5" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/compute/Disks.svg;points=[[0.499,0.003,0],[0.494,0.997,0],[0.219,0.5,0],[0.779,0.5,0],[0.955,0.125,0],[0.95,0.88,0],[0.035,0.865,0],[0.045,0.123,0]];labelPerimeter=1;" value="Disks" vertex="1">
+          <mxGeometry height="56.00000000000001" width="56.99999999999999" x="-103" y="274" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-6" parent="1" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;editableCssRules=.*;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMTUgMTUiIGNsYXNzPSIiIHJvbGU9InByZXNlbnRhdGlvbiIgaWQ9IkZ4U3ltYm9sMC0wMzYiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSI+PGc+PHRpdGxlLz48cGF0aCBmaWxsPSJ1cmwoI2JkYjRhMTE5LTMxYmItNGMzZS1iNzYyLWNmYzcyYWI2ZDA0NikiIGQ9Ik0xNC4xNSA1LjA0OFYuOThBLjE0Ni4xNDYgMCAwIDAgMTQgLjgzM0g5LjkzNWEuMTQ2LjE0NiAwIDAgMC0uMTAzLjI1bDEuMTIgMS4xMjEuMDc1LjA3NGEuMTUuMTUgMCAwIDEgMCAuMjA4TDYuMTIgNy4zOWEuMTUuMTUgMCAwIDAgMCAuMjA3bDEuMjY0IDEuMjY0YS4xNS4xNSAwIDAgMCAuMjA4IDBMMTIuNSAzLjk1N2EuMTQ2LjE0NiAwIDAgMSAuMjA4IDBsLjA3NC4wNzRMMTMuOSA1LjE1YS4xNDYuMTQ2IDAgMCAwIC4yNS0uMTAzIi8+PHBhdGggZmlsbD0iI0IzQjNCMyIgZD0iTTExLjE2MiA3LjgxNHYyLjk3OGEuMzQuMzQgMCAwIDEtLjM0Mi4zNDJINC4wMjJhLjM0LjM0IDAgMCAxLS4zNDItLjM0MlY0LjM3NWEuMzQuMzQgMCAwIDEgLjM0Mi0uMzQyaDMuNDA2YS4xOS4xOSAwIDAgMCAuMTg4LS4xODdWMy4xM2EuMTkuMTkgMCAwIDAtLjE4OC0uMTg4aC00LjVhLjM0My4zNDMgMCAwIDAtLjM0MS4zNDN2OC41OTdhLjM0LjM0IDAgMCAwIC4zNDEuMzQxaDguOTgxYS4zNC4zNCAwIDAgMCAuMzQzLS4zNDFWNy44MTRhLjE4Ny4xODcgMCAwIDAtLjE4OS0uMTg3aC0uNzE0YS4xODcuMTg3IDAgMCAwLS4xODcuMTg3Ii8+PHBhdGggZmlsbD0iIzc2QkMyRCIgZD0iTTEzLjk0IDEzLjMwOGgtLjg2di44NTloLjg2em0tMS43MzQuODU5aC0uODczdi0uODU5aC44NzV6bS0xLjc1IDBoLS44NzN2LS44NTloLjg3NHptLTEuNzUgMGgtLjg3M3YtLjg1OWguODc1em0tMS43NSAwaC0uODczdi0uODU5aC44NzR6bS0xLjc1IDBoLS44NzN2LS44NTloLjg3NXptLTEuNzUgMGgtLjg3M3YtLjg1OWguODc1em0tMS43NDgtLjg1OUguODV2Ljg1OWguODU4em0wLS44NzVILjg1di0uODc0aC44NTh6bTAtMS43NUguODV2LS44NzVoLjg1OHptMC0xLjc1SC44NVY4LjA2aC44NTh6bTAtMS43NUguODVWNi4zMWguODU4em0wLTEuNzVILjg1di0uODcyaC44NTh6bTAtMS43NUguODV2LS44NzJoLjg1OHptMC0yLjYwNUguODV2Ljg1OWguODU4em01LjI0OS44NTloLS44NzR2LS44NTloLjg3NHptLTEuNzUgMGgtLjg3NHYtLjg1OWguODc1em0tMS43NSAwaC0uODc0di0uODU5aC44NzV6bTEwLjQ4MSAxMC40OTZoLS44NTV2LS44NzRoLjg1OHptMC0xLjc1aC0uODU1di0uODc1aC44NTh6bTAtMS43NWgtLjg1NVY4LjA2aC44NTh6Ii8+PGRlZnMvPjwvZz48ZGVmcz4mI3hhOzxsaW5lYXJHcmFkaWVudCBpZD0iYmRiNGExMTktMzFiYi00YzNlLWI3NjItY2ZjNzJhYjZkMDQ2IiB4MT0iOC4xNDgiIHgyPSIxMi41NTMiIHkxPSItMS4xMDEiIHkyPSIxMC44NTciIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj48c3RvcCBzdG9wLWNvbG9yPSIjNkJCOUYyIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjMUI5M0VCIi8+PC9saW5lYXJHcmFkaWVudD4mI3hhOzwvZGVmcz4mI3hhOzwvc3ZnPg==;" value="Scaling plan" vertex="1">
+          <mxGeometry height="68" width="68" x="255" y="252" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-7" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/management_governance/Automation_Accounts.svg;points=[[0.5,0,0],[0.5,1,0],[0,0.5,0],[1,0.5,0],[0.877,0.168,0],[0.812,0.887,0],[0.268,0.982,0],[0.173,0.118,0]];labelPerimeter=1;" value="Automation Account" vertex="1">
+          <mxGeometry height="68" width="68" x="445" y="453.07" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-8" parent="1" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;editableCssRules=.*;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgNTAgNTAiIGNsYXNzPSIiIHJvbGU9InByZXNlbnRhdGlvbiIgaWQ9IkZ4U3ltYm9sMC0wNWUiIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCI+PGc+PHRpdGxlLz48cGF0aCBkPSJNNDcgNTBIM2MtMS42NiAwLTMtMS4zNC0zLTNWM2MwLTEuNjYgMS4zNC0zIDMtM2g0NGMxLjY2IDAgMyAxLjM0IDMgM3Y0NGMwIDEuNjYtMS4zNCAzLTMgM3oiIGNsYXNzPSJtc3BvcnRhbGZ4LXN2Zy1jMTUiIGZpbGw9IiM1OWI0ZDkiLz48cGF0aCBvcGFjaXR5PSIuOSIgZD0iTTQ3IDN2NDRIM1YzeiIgY2xhc3M9Im1zcG9ydGFsZngtc3ZnLWMwMSIgZmlsbD0iI2ZmZmZmZiIvPjxwYXRoIGQ9Ik0xOS4wMiAyOEg4Ljk4QzcuODkgMjggNyAyOC44OSA3IDI5Ljk4djEwLjA1QzcgNDEuMTEgNy44OSA0MiA4Ljk4IDQyaDEwLjA1YzEuMDkgMCAxLjk4LS44OSAxLjk4LTEuOThWMjkuOThBMiAyIDAgMCAwIDE5LjAyIDI4em0wLTIwSDguOThDNy44OSA4IDcgOC44OSA3IDkuOTh2MTAuMDVDNyAyMS4xMSA3Ljg5IDIyIDguOTggMjJoMTAuMDVjMS4wOSAwIDEuOTgtLjg5IDEuOTgtMS45OFY5Ljk4QTIgMiAwIDAgMCAxOS4wMiA4eiIgY2xhc3M9Im1zcG9ydGFsZngtc3ZnLWMxNiIgZmlsbD0iIzM5OTljNiIvPjxwYXRoIGQ9Im0yNy40NyAxNS42My0uNTMtLjU3YS41NjguNTY4IDAgMCAxLS4xNC0uMzdjLjAxLS4xMy4wNy0uMjYuMTctLjM1bDEuNTMtMS40MWMuMS0uMDkuMjItLjE0LjM0LS4xNC4xNCAwIC4yOC4wNi4zNy4xN2w0LjA5IDQuMzkgNy4xMy05LjE0Yy4xLS4xMi4yNC0uMi40LS4yLjEyIDAgLjIyLjA0LjMxLjExbDEuNjUgMS4yN2MuMTEuMDguMTcuMTkuMi4zM2EuNTEuNTEgMCAwIDEtLjExLjM4bC05LjAzIDExLjU2YS40OC40OCAwIDAgMS0uNzMuMDNsLTUuNjUtNi4wNnoiIGNsYXNzPSJtc3BvcnRhbGZ4LXN2Zy1jMTQiIGZpbGw9IiM1N2EzMDAiLz48cGF0aCBkPSJtNDIuMDYgMzAuMDYtMi4xMi0yLjEyTDM1IDMyLjg4bC00Ljk0LTQuOTQtMi4xMiAyLjEyTDMyLjg4IDM1bC00Ljk0IDQuOTQgMi4xMiAyLjEyTDM1IDM3LjEybDQuOTQgNC45NCAyLjEyLTIuMTJMMzcuMTIgMzV6IiBjbGFzcz0ibXNwb3J0YWxmeC1zdmctYzE5IiBmaWxsPSIjMDA3MmM2Ii8+PC9nPjxkZWZzPiYjeGE7PC9kZWZzPiYjeGE7PC9zdmc+;" value="Jobs" vertex="1">
+          <mxGeometry height="50" width="50" x="455" y="576" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-9" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/management_governance/Monitor.svg;points=[[0.5,0,0],[0.5,1,0],[0,0.5,0],[1,0.501,0],[0.87,0.163,0],[0.837,0.87,0],[0.163,0.87,0],[0.153,0.14,0]];labelPerimeter=1;" value="Monitor" vertex="1">
+          <mxGeometry height="64" width="64" x="790" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-10" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/analytics/Log_Analytics_Workspaces.svg;points=[[0.5,0.03,0],[0.5,1,0],[0,0.5,0],[0.97,0.5,0],[0.88,0.083,0],[0.005,0.985,0]];labelPerimeter=1;" value="Log Analytics" vertex="1">
+          <mxGeometry height="64" width="64" x="660" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-11" parent="1" style="image;aspect=fixed;html=1;align=center;fontSize=12;image=img/lib/azure2/management_governance/Alerts.svg;points=[[0.5,0,0],[0.674,1,0],[0,0.424,0],[1,0.424,0],[0.99,0.009,0],[0.985,0.841,0],[0.015,0.844,0],[0.01,0.009,0]];labelPerimeter=1;" value="Alert Rules" vertex="1">
+          <mxGeometry height="56.00000000000001" width="67" x="1066.5" y="404" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-12" parent="1" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;fillColor=#515151;shape=mxgraph.mscae.system_center.admin_console;labelPerimeter=1;" value="Admin" vertex="1">
+          <mxGeometry height="76" width="100" x="1290" y="394" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-13" parent="1" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;editableCssRules=.*;image=data:image/svg+xml,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMTggMTgiIGNsYXNzPSIiIHJvbGU9InByZXNlbnRhdGlvbiIgaWQ9IkZ4U3ltYm9sMC0wM2YiIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCI+PGc+PHRpdGxlPkljb24tZ2VuZXJhbC00PC90aXRsZT48cGF0aCBmaWxsPSJ1cmwoIzU3ODc5ZTRmLWQyZTUtNGQ5NS05YTlkLThkMDg1NTEzMjA0YSkiIGQ9Ik04LjY2IDE3LjEyYzguMTgtNS44NiA4LjQ2LTkuMjggOC40OS0xMC4zNS4wNS0xLjUtLjE1LTUuNDEtNC4xNS01LjcyQTQuMjYgNC4yNiAwIDAgMCA4LjY2IDMuOWE0LjI4IDQuMjggMCAwIDAtNC4zOS0yLjg1Qy4zMiAxLjM2LjExIDUuMjcuMTYgNi43N2MwIDEuMDcuMzIgNC40OSA4LjUgMTAuMzUiLz48cGF0aCBmaWxsPSJub25lIiBkPSJNMTcuMTUgNi43N0MxNy4yIDUuMjcgMTcgMS4zNiAxMyAxLjA1QTQuMjYgNC4yNiAwIDAgMCA4LjY2IDMuOWE0LjI4IDQuMjggMCAwIDAtNC4zOS0yLjg1Qy4zMiAxLjM2LjExIDUuMjcuMTYgNi43N2MwIDEuMDcuMjQgNC40NCA4LjQzIDEwLjMiLz48cGF0aCBkPSJNMTcuMTUgNi4xOGgtNGEuMTcuMTcgMCAwIDAtLjEzLjA3bC0xLjIxIDIuMDlhLjE2LjE2IDAgMCAxLS4yNyAwTDkuODEgNS4wNWEuMzEuMzEgMCAwIDAtLjU2IDBMNy41OSAxMGEuMTYuMTYgMCAwIDEtLjI5IDBMNS44OCA2LjcxYS4zMS4zMSAwIDAgMC0uNTUgMEwzLjM5IDEwLjJhLjE2LjE2IDAgMCAxLS4xMy4wOEgxLjQyYTEzIDEzIDAgMCAwIC45IDEuMjJINGEuMTMuMTMgMCAwIDAgLjEzLS4wOGwxLjIxLTIuMjNhLjE2LjE2IDAgMCAxIC4yOCAwbDEuNjYgMy44NmEuMzEuMzEgMCAwIDAgLjU4IDBsMS43NS01LjJhLjE1LjE1IDAgMCAxIC4yOCAwbDEuNDYgMi43N2EuMy4zIDAgMCAwIC41MyAwbDEuODYtMy4xM2EuMTYuMTYgMCAwIDEgLjEzLS4wOGgzLjIzIiBjbGFzcz0ibXNwb3J0YWxmeC1zdmctYzAxIiBmaWxsPSIjZmZmZmZmIi8+PC9nPjxkZWZzPiYjeGE7PGxpbmVhckdyYWRpZW50IGlkPSI1Nzg3OWU0Zi1kMmU1LTRkOTUtOWE5ZC04ZDA4NTUxMzIwNGEiIHgxPSI4LjY2IiB4Mj0iOC42NiIgeTE9IjE3LjEyIiB5Mj0iMS4wMyIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iIzE5ODhkOSIvPjxzdG9wIG9mZnNldD0iLjIyIiBzdG9wLWNvbG9yPSIjMjE4ZGRjIi8+PHN0b3Agb2Zmc2V0PSIuNTYiIHN0b3AtY29sb3I9IiMzNzljZTUiLz48c3RvcCBvZmZzZXQ9Ii45IiBzdG9wLWNvbG9yPSIjNTRhZWYwIi8+PC9saW5lYXJHcmFkaWVudD4mI3hhOzwvZGVmcz4mI3hhOzwvc3ZnPg==;" value="Service Health" vertex="1">
+          <mxGeometry height="68" width="68" x="380" y="98" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-14" parent="1" style="pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#4495D1;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;shape=mxgraph.veeam.cpu;labelPerimeter=1;" value="CPU" vertex="1">
+          <mxGeometry height="44.8" width="44.8" x="-96.89999999999998" y="366" as="geometry" />
+        </mxCell>
+        <mxCell id="4tCy0Q8nVioG1p2ELauP-15" parent="1" style="pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#4495D1;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;align=center;outlineConnect=0;shape=mxgraph.veeam.ram;labelPerimeter=1;" value="Memory" vertex="1">
+          <mxGeometry height="25.2" width="48.4" x="-96.9" y="453.07" as="geometry" />
+        </mxCell>
+        <mxCell id="title-avd-monitoring" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=22;fontStyle=1;fontColor=#1f2937;" value="Azure Virtual Desktop monitoring baseline" vertex="1">
+          <mxGeometry height="30" width="420" x="40" y="35" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle-avd-monitoring" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontColor=#5b6470;" value="Bicep deployment, Automation collectors and Azure Monitor alerts" vertex="1">
+          <mxGeometry height="24" width="520" x="40" y="68" as="geometry" />
+        </mxCell>
+        <mxCell id="section-automation" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#e5c889;align=left;verticalAlign=top;spacingTop=8;spacingLeft=12;fontSize=13;fontStyle=1;fontColor=#765616;" value="Automation" vertex="1">
+          <mxGeometry height="251" width="180" x="395" y="409" as="geometry" />
+        </mxCell>
+        <mxCell id="label-ama" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8eb7dd;align=center;verticalAlign=middle;fontSize=11;fontColor=#1f4e79;" value="Azure Monitor Agent" vertex="1">
+          <mxGeometry height="34" width="130" x="540" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="label-dcr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8eb7dd;align=center;verticalAlign=middle;fontSize=11;fontColor=#1f4e79;" value="DCRs&lt;br&gt;metrics, counters and events" vertex="1">
+          <mxGeometry height="48" width="160" x="860" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="label-queries" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#a9d5b7;align=center;verticalAlign=middle;fontSize=11;fontColor=#26643a;" value="KQL queries&lt;br&gt;and collectors" vertex="1">
+          <mxGeometry height="44" width="125" x="830" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#c9ced6;align=left;verticalAlign=middle;fontSize=11;fontColor=#4b5563;spacingLeft=10;" value="Solid line: data flow&lt;br&gt;Dashed line: control or deployment flow" vertex="1">
+          <mxGeometry height="45" width="250" x="975" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-hostpool-session" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-3" value="contains">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-session-storage" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-4" value="FSLogix profiles">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-session-disks" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-3" value="OS and data disks">
+          <mxGeometry relative="1" x="-0.289" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-cpu-session" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-3" value="CPU">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-memory-session" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-3" value="memory">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-scaling-hostpool" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9b7a28;dashed=1;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-2" value="start and stop hosts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-session-ama" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="label-ama" value="guest data">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-ama-dcr" edge="1" parent="1" source="label-ama" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="label-dcr" value="collect">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-dcr-monitor" edge="1" parent="1" source="label-dcr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-9" value="metrics and events">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-dcr-law" edge="1" parent="1" source="label-dcr" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-10" value="counters and logs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-monitor-alerts" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-11" value="metric alerts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-law-alerts" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-11" value="log alerts">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-service-alerts" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9b7a28;dashed=1;endArrow=block;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="4tCy0Q8nVioG1p2ELauP-11" value="platform health">
+          <mxGeometry relative="1" x="0.0325" as="geometry">
+            <Array as="points">
+              <mxPoint x="491.6" y="132" />
+              <mxPoint x="491.6" y="220" />
+              <mxPoint x="1100" y="220" />
+            </Array>
+            <mxPoint x="468" y="141" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge-alert-admin" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#4b86c5;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-12" value="notification">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-automation-jobs" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9b7a28;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-8" value="run collectors">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-jobs-queries" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9b7a28;endArrow=block;" target="label-queries" value="collect AVD state">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-queries-law" edge="1" parent="1" source="label-queries" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9b7a28;dashed=1;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-10" value="write collector data">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-automation-session" edge="1" parent="1" source="4tCy0Q8nVioG1p2ELauP-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#9b7a28;dashed=1;endArrow=block;" target="4tCy0Q8nVioG1p2ELauP-2" value="query host pools">
+          <mxGeometry relative="1" x="-0.3731" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
