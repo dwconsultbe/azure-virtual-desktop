@@ -1,6 +1,6 @@
 targetScope = 'resourceGroup'
 
-import { fillQuery, hostPoolVmsFragment, queryRuleProperties, RuleContext } from '../rules.bicep'
+import { fillQuery, hostPoolVmsFragment, queryRuleProperties, RuleContext } from '../../rules.bicep'
 
 param location string
 param hostPoolResourceId string
@@ -37,7 +37,7 @@ resource profileDiskInUse 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = 
     severity: 2
     evaluationFrequency: 'PT5M'
     windowSize: 'PT30M'
-    query: fillQuery(loadTextContent('../queries/fslogix-disk-in-use.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/fslogix-disk-in-use.kql'), queryValues)
     dimensions: ['SessionHostName', 'UserName', 'ProfilePath']
   })
 }
@@ -62,7 +62,7 @@ var fslogixEvents = [
 var perUserOutput = '| project SessionHostName, UserName, RenderedDescription'
 var perHostOutput = '| summarize Events = count(), Users = dcount(UserName), LastEvent = max(TimeGenerated), Example = take_any(RenderedDescription) by SessionHostName'
 
-var fslogixQueryTemplate = loadTextContent('../queries/fslogix-event.kql')
+var fslogixQueryTemplate = loadTextContent('../../queries/fslogix-event.kql')
 
 resource fslogixEventAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [for alert in fslogixEvents: {
   name: '${alertNamePrefix}-${hostPoolName}-fslogix-${alert.shortName}-${uniqueString(hostPoolResourceId)}'

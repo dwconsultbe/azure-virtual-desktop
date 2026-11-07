@@ -21,12 +21,12 @@ You need:
 
 - an Azure subscription;
 - a resource group for the monitoring resources, or permission to create one;
-- an existing Log Analytics workspace;
+- an existing Log Analytics workspace, or permission to create one;
 - an existing Action Group, or an email address for a new Action Group;
 - the names and resource groups of the host pools and storage resources you want to monitor;
 - an Azure DevOps service connection with the permissions listed below.
 
-The solution does not create the Log Analytics workspace or AVD diagnostics. Set `createMonitoringResourceGroup` to `true` to create the monitoring resource group, or use an existing one. You can also use an existing Action Group or create a new one with the template.
+The solution can use an existing Log Analytics workspace or create one in the monitoring resource group. AVD diagnostics, guest data collection rules and their policy assignments are optional. Set `createMonitoringResourceGroup` to `true` to create the monitoring resource group, or use an existing one. You can also use an existing Action Group or create a new one with the template.
 
 ## Files you need
 
@@ -40,7 +40,7 @@ Edit `parameters/main.example.bicepparam` in your private copy of the repository
 
 ## Required permissions
 
-The deployment uses two identities.
+The deployment uses the Azure DevOps service connection and the Automation Account identity. If you enable DCR policies, Azure Policy also uses a managed identity for each assignment.
 
 ### Azure DevOps service connection
 
@@ -49,6 +49,7 @@ The service connection needs permission to:
 - create a deployment at subscription level;
 - **Contributor** on the monitoring resource group;
 - create role assignments on the resource groups where the Automation identity needs access. **User Access Administrator** or **Owner** can do this.
+- when using DCR policies, **Resource Policy Contributor** (or **Owner**) on each host-pool resource group to create policy assignments, and **User Access Administrator** (or **Owner**) there to grant the policy identity its role;
 
 The service connection creates the Automation Account, runbooks, schedules, diagnostic settings, alerts and role assignments. When `createMonitoringResourceGroup` is true, it also needs permission to create a resource group in the subscription.
 
@@ -65,6 +66,8 @@ The host pool collector uses **Desktop Virtualization Reader** to read host pool
 
 The template gives these roles to the Automation identity during deployment. When you add a host pool or scaling plan to the parameter file and deploy again, the identity gets access to that resource group. Resources in the same resource group share one role assignment. For a resource in another subscription, add `subscriptionId` to its entry and make sure the service connection can create role assignments there.
 
+When `associateDcrsWithPolicy` is enabled, the template creates one built-in DCR association policy assignment per DCR and host-pool resource group. Each assignment identity gets **Monitoring Contributor** on that resource group so the policy can create DCR associations on matching VMs. This identity does not collect or read the VM data. The policy only applies to supported Windows images, plus any images listed in `customWindowsImageIds`.
+
 To collect data from another Azure Files account, add it to `fileStorageAccounts` and redeploy. The template grants **Reader** on that account's resource group.
 
 You can grant these roles on smaller parts of your Azure setup if your security rules require it.
@@ -75,6 +78,10 @@ Open `parameters/main.example.bicepparam` and set:
 
 - the monitoring resource group and Azure region;
 - the Log Analytics workspace name and resource group;
+- whether to create a Log Analytics workspace in the monitoring resource group or use an existing workspace;
+- whether to deploy the AVD guest-data DCR, the separate VM Insights DCR, and DCR association policies;
+- the Log Analytics workspace region for DCRs when using an existing workspace;
+- whether to configure AVD host-pool and AVD workspace diagnostic settings, and the AVD workspace names when needed;
 - the existing Action Group name and resource group, if you are reusing one;
 - whether to use an existing Action Group or create a new one;
 - the new Action Group name and email receivers, when you create one;
@@ -116,6 +123,33 @@ param hostPools = [
 ```
 
 Add one entry for each host pool to `hostPools`. `hostPoolType` is optional and defaults to `Pooled`; set it to `Personal` for a personal pool. Add scaling plans to `scalingPlans` as a separate list. The order of the two lists does not need to match.
+
+## Optional data collection setup
+
+The example keeps these options off. Turn on only the parts you want to deploy:
+
+- `createLogAnalyticsWorkspace`: creates a workspace in the monitoring resource group. Set `newLogAnalyticsWorkspaceName`; the workspace uses the deployment `location` and the configured retention period.
+- `deployAvdGuestDataDcr`: creates a Windows DCR for the `Perf` counters and Windows event logs used by the alerts. It collects System events, Application warnings and errors, Terminal Services events, and FSLogix events. It also includes per-process counters, which can increase data ingestion; check your expected Azure Monitor costs.
+- `deployVmInsightsDcr`: creates a separate DCR for VM Insights `DetailedMetrics`. This is not needed by the alert queries in this project and can increase ingestion.
+- `associateDcrsWithPolicy`: assigns Microsoft's built-in DCR association policy in each host-pool resource group for every DCR enabled above. The Azure Monitor Agent (AMA) must already be installed on the session hosts. The policy covers supported Windows VMs in those resource groups, not only VMs registered in the host pools. Add custom image resource IDs to `customWindowsImageIds` if needed.
+- `configureAvdDiagnostics`: creates diagnostic settings on the host pools and the AVD workspaces listed in `avdWorkspaces`. It sends the categories used by AVD Insights to the selected Log Analytics workspace. It does not configure diagnostics on the Log Analytics workspace itself.
+
+When enabling AVD diagnostics, add each Azure Virtual Desktop workspace (not the Log Analytics workspace) to `avdWorkspaces`:
+
+```bicep
+param avdWorkspaces = [
+  {
+    resourceGroupName: 'rg-avd'
+    name: 'workspace-production'
+  }
+]
+```
+
+Set `dataCollectionRuleLocation` to the region of an existing Log Analytics workspace before deploying DCRs. When the template creates the workspace, it uses `location` for both the workspace and DCRs.
+
+Azure Policy applies to new matching VMs after evaluation. After the first deployment, create a remediation task for each DCR policy assignment to associate existing VMs. The policy does not install AMA. If AMA is missing, install it before running remediation. New session hosts in the host-pool resource group are picked up by later policy evaluations.
+
+Review existing diagnostic settings before setting `configureAvdDiagnostics` to `true`. Azure does not allow the same log category to be sent to the same workspace by multiple settings on one resource. This template creates a separate setting; it does not merge or change existing settings.
 
 ## Deploy
 

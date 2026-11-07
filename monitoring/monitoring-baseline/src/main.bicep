@@ -33,8 +33,44 @@ type HostPoolConfig = {
   hostPoolType: ('Pooled' | 'Personal')?
 }
 
-@description('Existing Log Analytics workspace. Provide its subscription, resource group and name.')
-param logAnalyticsWorkspace AzureResourceReference
+@description('Existing Log Analytics workspace. Used when createLogAnalyticsWorkspace is false.')
+param logAnalyticsWorkspace AzureResourceReference = {
+  subscriptionId: ''
+  resourceGroupName: ''
+  name: ''
+}
+
+@description('Create a Log Analytics workspace in the monitoring resource group.')
+param createLogAnalyticsWorkspace bool = false
+
+@description('Name for a new Log Analytics workspace. Used only when createLogAnalyticsWorkspace is true.')
+param newLogAnalyticsWorkspaceName string = ''
+
+@description('Workspace data retention in days when creating a new workspace.')
+@minValue(30)
+@maxValue(730)
+param logAnalyticsWorkspaceRetentionInDays int = 30
+
+@description('Location of the Log Analytics workspace for DCRs. Must match the existing workspace location; when creating a workspace, location is used by default.')
+param dataCollectionRuleLocation string = ''
+
+@description('Deploy the Windows DCR for AVD performance counters and Windows events.')
+param deployAvdGuestDataDcr bool = false
+
+@description('Deploy the separate VM Insights DetailedMetrics DCR.')
+param deployVmInsightsDcr bool = false
+
+@description('Assign Azure Policy to associate enabled DCRs with supported Windows VMs in each host-pool resource group. AMA must be installed on the VMs.')
+param associateDcrsWithPolicy bool = false
+
+@description('Optional custom Windows image resource IDs to include in the built-in DCR association policy.')
+param customWindowsImageIds array = []
+
+@description('Configure AVD host-pool and AVD workspace diagnostic settings to send required logs to Log Analytics.')
+param configureAvdDiagnostics bool = false
+
+@description('Azure Virtual Desktop workspaces that should send diagnostic logs to Log Analytics.')
+param avdWorkspaces AzureResourceReference[] = []
 
 @description('Set to true to create an Action Group in the monitoring resource group. Keep false to use an existing Action Group.')
 param createActionGroup bool = false
@@ -60,6 +96,17 @@ resource monitoringResourceGroup 'Microsoft.Resources/resourceGroups@2024-03-01'
   name: monitoringResourceGroupName
   location: location
   tags: monitoringResourceGroupTags
+}
+
+module logAnalyticsWorkspaceDeployment 'modules/data-collection/log-analytics-workspace.bicep' = if (createLogAnalyticsWorkspace) {
+  name: 'avd-log-analytics-workspace'
+  scope: resourceGroup(monitoringResourceGroupName)
+  dependsOn: [monitoringResourceGroup]
+  params: {
+    workspaceName: newLogAnalyticsWorkspaceName
+    location: location
+    retentionInDays: logAnalyticsWorkspaceRetentionInDays
+  }
 }
 
 @description('Host pools to monitor. Each one must send diagnostics to the selected workspace.')
@@ -130,10 +177,18 @@ param serviceHealthServiceName string = 'Azure Virtual Desktop'
 @description('Deploy the Autoscale Failures rule only when pooled autoscale diagnostics are collected.')
 param includeAutoscaleFailures bool = false
 
-var logAnalyticsWorkspaceResourceId = resourceId(logAnalyticsWorkspace.?subscriptionId ?? subscription().subscriptionId, logAnalyticsWorkspace.resourceGroupName, 'Microsoft.OperationalInsights/workspaces', logAnalyticsWorkspace.name)
+var effectiveLogAnalyticsWorkspaceName = createLogAnalyticsWorkspace ? newLogAnalyticsWorkspaceName : logAnalyticsWorkspace.name
+var effectiveLogAnalyticsWorkspaceResourceGroupName = createLogAnalyticsWorkspace ? monitoringResourceGroupName : logAnalyticsWorkspace.resourceGroupName
+var effectiveLogAnalyticsWorkspaceSubscriptionId = createLogAnalyticsWorkspace ? subscription().subscriptionId : (logAnalyticsWorkspace.?subscriptionId ?? subscription().subscriptionId)
+var logAnalyticsWorkspaceResourceId = resourceId(effectiveLogAnalyticsWorkspaceSubscriptionId, effectiveLogAnalyticsWorkspaceResourceGroupName, 'Microsoft.OperationalInsights/workspaces', effectiveLogAnalyticsWorkspaceName)
+var effectiveDataCollectionRuleLocation = empty(dataCollectionRuleLocation) ? location : dataCollectionRuleLocation
 var existingActionGroupResourceId = empty(existingActionGroup.name) ? '' : resourceId(existingActionGroup.?subscriptionId ?? subscription().subscriptionId, existingActionGroup.resourceGroupName, 'Microsoft.Insights/actionGroups', existingActionGroup.name)
 var hostPoolResourceIds = [for pool in hostPools: resourceId(pool.?subscriptionId ?? subscription().subscriptionId, pool.resourceGroupName, 'Microsoft.DesktopVirtualization/hostPools', pool.name)]
+var uniqueHostPoolResourceIds = union(hostPoolResourceIds, [])
+var avdWorkspaceResourceIds = [for workspace in avdWorkspaces: resourceId(workspace.?subscriptionId ?? subscription().subscriptionId, workspace.resourceGroupName, 'Microsoft.DesktopVirtualization/workspaces', workspace.name)]
+var uniqueAvdWorkspaceResourceIds = union(avdWorkspaceResourceIds, [])
 var hostPoolResourceGroups = [for pool in hostPools: toLower('/subscriptions/${pool.?subscriptionId ?? subscription().subscriptionId}/resourceGroups/${pool.resourceGroupName}')]
+var uniqueHostPoolResourceGroups = union(hostPoolResourceGroups, [])
 var scalingPlanResourceIds = [for plan in scalingPlans: resourceId(plan.?subscriptionId ?? subscription().subscriptionId, plan.resourceGroupName, 'Microsoft.DesktopVirtualization/scalingPlans', plan.name)]
 var scalingPlanResourceGroups = [for plan in scalingPlans: toLower('/subscriptions/${plan.?subscriptionId ?? subscription().subscriptionId}/resourceGroups/${plan.resourceGroupName}')]
 var avdReaderResourceGroups = union(hostPoolResourceGroups, scalingPlanResourceGroups)
@@ -142,7 +197,7 @@ var anfVolumeResourceIds = [for volume in anfVolumes: resourceId(volume.?subscri
 var storageResourceGroups = [for account in fileStorageAccounts: toLower('/subscriptions/${account.?subscriptionId ?? subscription().subscriptionId}/resourceGroups/${account.resourceGroupName}')]
 var storageReaderResourceGroups = union(storageResourceGroups, [])
 
-module actionGroup 'modules/action-group.bicep' = if (createActionGroup) {
+module actionGroup 'modules/alerts/action-group.bicep' = if (createActionGroup) {
   name: 'avd-action-group'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -153,9 +208,74 @@ module actionGroup 'modules/action-group.bicep' = if (createActionGroup) {
   }
 }
 
+module avdGuestDataDcr 'modules/data-collection/avd-guest-data-dcr.bicep' = if (deployAvdGuestDataDcr) {
+  name: 'avd-guest-data-dcr'
+  scope: resourceGroup(monitoringResourceGroupName)
+  dependsOn: [monitoringResourceGroup, logAnalyticsWorkspaceDeployment]
+  params: {
+    ruleName: '${take(alertNamePrefix, 34)}-guest-data-${uniqueString(logAnalyticsWorkspaceResourceId)}'
+    location: effectiveDataCollectionRuleLocation
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+  }
+}
+
+module vmInsightsDcr 'modules/data-collection/vm-insights-dcr.bicep' = if (deployVmInsightsDcr) {
+  name: 'avd-vm-insights-dcr'
+  scope: resourceGroup(monitoringResourceGroupName)
+  dependsOn: [monitoringResourceGroup, logAnalyticsWorkspaceDeployment]
+  params: {
+    ruleName: '${take(alertNamePrefix, 34)}-vm-insights-${uniqueString(logAnalyticsWorkspaceResourceId)}'
+    location: effectiveDataCollectionRuleLocation
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+  }
+}
+
+module avdGuestDcrPolicies 'modules/data-collection/dcr-association-policy.bicep' = [for (resourceGroupId, index) in uniqueHostPoolResourceGroups: if (associateDcrsWithPolicy && deployAvdGuestDataDcr) {
+  name: 'avd-guest-dcr-policy-${index}-${uniqueString(resourceGroupId)}'
+  scope: resourceGroup(split(resourceGroupId, '/')[2], split(resourceGroupId, '/')[4])
+  params: {
+    assignmentName: '${take(alertNamePrefix, 24)}-guest-dcr-${uniqueString(resourceGroupId)}'
+    assignmentLocation: location
+    dataCollectionRuleResourceId: avdGuestDataDcr.?outputs.?resourceId ?? ''
+    windowsImageIds: customWindowsImageIds
+  }
+}]
+
+module vmInsightsDcrPolicies 'modules/data-collection/dcr-association-policy.bicep' = [for (resourceGroupId, index) in uniqueHostPoolResourceGroups: if (associateDcrsWithPolicy && deployVmInsightsDcr) {
+  name: 'avd-vminsights-dcr-policy-${index}-${uniqueString(resourceGroupId)}'
+  scope: resourceGroup(split(resourceGroupId, '/')[2], split(resourceGroupId, '/')[4])
+  params: {
+    assignmentName: '${take(alertNamePrefix, 24)}-vm-insights-${uniqueString(resourceGroupId)}'
+    assignmentLocation: location
+    dataCollectionRuleResourceId: vmInsightsDcr.?outputs.?resourceId ?? ''
+    windowsImageIds: customWindowsImageIds
+  }
+}]
+
+module hostPoolDiagnostics 'modules/data-collection/avd-host-pool-diagnostics.bicep' = [for (hostPoolId, index) in uniqueHostPoolResourceIds: if (configureAvdDiagnostics) {
+  name: 'avd-host-pool-diagnostics-${index}-${uniqueString(hostPoolId)}'
+  scope: resourceGroup(split(hostPoolId, '/')[2], split(hostPoolId, '/')[4])
+  params: {
+    hostPoolName: last(split(hostPoolId, '/'))
+    diagnosticSettingName: take('avd-baseline-${uniqueString(hostPoolId)}', 64)
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+    includeAutoscaleFailures: includeAutoscaleFailures
+  }
+}]
+
+module workspaceDiagnostics 'modules/data-collection/avd-workspace-diagnostics.bicep' = [for (workspaceId, index) in uniqueAvdWorkspaceResourceIds: if (configureAvdDiagnostics) {
+  name: 'avd-workspace-diagnostics-${index}-${uniqueString(workspaceId)}'
+  scope: resourceGroup(split(workspaceId, '/')[2], split(workspaceId, '/')[4])
+  params: {
+    avdWorkspaceName: last(split(workspaceId, '/'))
+    diagnosticSettingName: take('avd-baseline-${uniqueString(workspaceId)}', 64)
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
+  }
+}]
+
 var effectiveActionGroupResourceId = actionGroup.?outputs.?resourceId ?? existingActionGroupResourceId
 
-module collectorInfrastructure 'modules/collector-infrastructure.bicep' = {
+module collectorInfrastructure 'modules/collectors/collector-infrastructure.bicep' = {
   name: 'avd-collector-infrastructure'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -169,7 +289,7 @@ module collectorInfrastructure 'modules/collector-infrastructure.bicep' = {
   }
 }
 
-module collectorHealthAlerts 'modules/collector-health-alerts.bicep' = {
+module collectorHealthAlerts 'modules/alerts/collector-health-alerts.bicep' = {
   name: 'avd-collector-health-alerts'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -186,7 +306,7 @@ module collectorHealthAlerts 'modules/collector-health-alerts.bicep' = {
   }
 }
 
-module avdReader 'modules/collector-reader-role.bicep' = [for (rgId, index) in avdReaderResourceGroups: {
+module avdReader 'modules/collectors/collector-reader-role.bicep' = [for (rgId, index) in avdReaderResourceGroups: {
   name: 'avd-collector-avd-reader-${index}-${uniqueString(rgId)}'
   scope: resourceGroup(split(rgId, '/')[2], split(rgId, '/')[4])
   params: {
@@ -195,7 +315,7 @@ module avdReader 'modules/collector-reader-role.bicep' = [for (rgId, index) in a
   }
 }]
 
-module storageReader 'modules/collector-reader-role.bicep' = [for (rgId, index) in storageReaderResourceGroups: {
+module storageReader 'modules/collectors/collector-reader-role.bicep' = [for (rgId, index) in storageReaderResourceGroups: {
   name: 'avd-collector-storage-reader-${index}-${uniqueString(rgId)}'
   scope: resourceGroup(split(rgId, '/')[2], split(rgId, '/')[4])
   params: {
@@ -204,7 +324,7 @@ module storageReader 'modules/collector-reader-role.bicep' = [for (rgId, index) 
   }
 }]
 
-module hostPoolAlerts 'modules/host-pool-alerts.bicep' = [for (hostPoolId, index) in hostPoolResourceIds: {
+module hostPoolAlerts 'modules/alerts/host-pool-alerts.bicep' = [for (hostPoolId, index) in hostPoolResourceIds: {
   name: 'avd-log-alerts-${index}-${uniqueString(hostPoolId)}'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -220,7 +340,7 @@ module hostPoolAlerts 'modules/host-pool-alerts.bicep' = [for (hostPoolId, index
   }
 }]
 
-module hostPoolCollectorAlerts 'modules/host-pool-collector-alerts.bicep' = [for (pool, index) in hostPools: {
+module hostPoolCollectorAlerts 'modules/alerts/host-pool-collector-alerts.bicep' = [for (pool, index) in hostPools: {
   name: 'avd-collector-alerts-${index}-${uniqueString(hostPoolResourceIds[index])}'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -236,7 +356,7 @@ module hostPoolCollectorAlerts 'modules/host-pool-collector-alerts.bicep' = [for
   }
 }]
 
-module hostPoolHealthAlerts 'modules/host-pool-health-alerts.bicep' = [for (hostPoolId, index) in hostPoolResourceIds: {
+module hostPoolHealthAlerts 'modules/alerts/host-pool-health-alerts.bicep' = [for (hostPoolId, index) in hostPoolResourceIds: {
   name: 'avd-health-alerts-${index}-${uniqueString(hostPoolId)}'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -254,7 +374,7 @@ module hostPoolHealthAlerts 'modules/host-pool-health-alerts.bicep' = [for (host
   }
 }]
 
-module sessionHostMetricAlerts 'modules/session-host-metric-alerts.bicep' = [for (pool, index) in hostPools: {
+module sessionHostMetricAlerts 'modules/alerts/session-host-metric-alerts.bicep' = [for (pool, index) in hostPools: {
   name: 'avd-session-host-metrics-${index}-${uniqueString(hostPoolResourceIds[index])}'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -269,7 +389,7 @@ module sessionHostMetricAlerts 'modules/session-host-metric-alerts.bicep' = [for
   }
 }]
 
-module fslogixAlerts 'modules/fslogix-alerts.bicep' = [for (hostPoolId, index) in hostPoolResourceIds: {
+module fslogixAlerts 'modules/alerts/fslogix-alerts.bicep' = [for (hostPoolId, index) in hostPoolResourceIds: {
   name: 'avd-fslogix-alerts-${index}-${uniqueString(hostPoolId)}'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -284,7 +404,7 @@ module fslogixAlerts 'modules/fslogix-alerts.bicep' = [for (hostPoolId, index) i
   }
 }]
 
-module fileMetricAlerts 'modules/file-metric-alerts.bicep' = [for (storageId, index) in fileStorageAccountResourceIds: {
+module fileMetricAlerts 'modules/alerts/file-metric-alerts.bicep' = [for (storageId, index) in fileStorageAccountResourceIds: {
   name: 'avd-files-metric-alerts-${index}-${uniqueString(storageId)}'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -297,7 +417,7 @@ module fileMetricAlerts 'modules/file-metric-alerts.bicep' = [for (storageId, in
   }
 }]
 
-module storageShareAlerts 'modules/storage-share-alerts.bicep' = [for (storageId, index) in fileStorageAccountResourceIds: {
+module storageShareAlerts 'modules/alerts/storage-share-alerts.bicep' = [for (storageId, index) in fileStorageAccountResourceIds: {
   name: 'avd-storage-share-alerts-${index}-${uniqueString(storageId)}'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -312,7 +432,7 @@ module storageShareAlerts 'modules/storage-share-alerts.bicep' = [for (storageId
   }
 }]
 
-module anfVolumeAlerts 'modules/anf-volume-alerts.bicep' = [for (volumeId, index) in anfVolumeResourceIds: {
+module anfVolumeAlerts 'modules/alerts/anf-volume-alerts.bicep' = [for (volumeId, index) in anfVolumeResourceIds: {
   name: 'avd-anf-volume-alerts-${index}-${uniqueString(volumeId)}'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -325,7 +445,7 @@ module anfVolumeAlerts 'modules/anf-volume-alerts.bicep' = [for (volumeId, index
   }
 }]
 
-module serviceHealthAlerts 'modules/service-health-alerts.bicep' = {
+module serviceHealthAlerts 'modules/alerts/service-health-alerts.bicep' = {
   name: 'avd-service-health-alerts'
   scope: resourceGroup(monitoringResourceGroupName)
   dependsOn: [monitoringResourceGroup]
@@ -342,6 +462,10 @@ output automationAccountName string = automationAccountName
 output hostPoolRunbookName string = collectorInfrastructure.outputs.hostPoolRunbookName
 output storageRunbookName string = collectorInfrastructure.outputs.storageRunbookName
 output actionGroupResourceId string = effectiveActionGroupResourceId
+output logAnalyticsWorkspaceResourceId string = logAnalyticsWorkspaceResourceId
+output avdGuestDataDcrResourceId string = avdGuestDataDcr.?outputs.?resourceId ?? ''
+output vmInsightsDcrResourceId string = vmInsightsDcr.?outputs.?resourceId ?? ''
+output avdWorkspaceResourceIds array = avdWorkspaceResourceIds
 output hostPoolResourceIds array = hostPoolResourceIds
 output scalingPlanResourceIds array = scalingPlanResourceIds
 output fileStorageAccountResourceIds array = fileStorageAccountResourceIds

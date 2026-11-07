@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
-import { hostPoolCollectorName } from '../naming.bicep'
-import { collectorRowsFragment, fillQuery, queryRuleProperties, RuleContext } from '../rules.bicep'
+import { hostPoolCollectorName } from '../../naming.bicep'
+import { collectorRowsFragment, fillQuery, queryRuleProperties, RuleContext } from '../../rules.bicep'
 
 param location string
 param hostPoolResourceId string
@@ -30,7 +30,7 @@ var queryValues = {
 
 // Pooled host pools only: Personal pools have no meaningful session limit, so their load
 // would be near 0 or a misleading 100. Their hosts are covered by personalUnhealthy.
-var capacityQuery = fillQuery(loadTextContent('../queries/capacity.kql'), queryValues)
+var capacityQuery = fillQuery(loadTextContent('../../queries/capacity.kql'), queryValues)
 
 var capacityBands = [
   { id: 'capacity50', shortName: 'capacity-50', lower: 50, upper: 85, severity: 3 }
@@ -62,7 +62,7 @@ var scalingDisabledDefinitions = [
   { id: 'scalingPlanDisabled24h', shortName: 'scaling-disabled-24h', hours: 24, minRuns: 72, severity: 2, frequency: 'PT6H', window: 'P1D' }
 ]
 
-var scalingDisabledTemplate = loadTextContent('../queries/scaling-disabled.kql')
+var scalingDisabledTemplate = loadTextContent('../../queries/scaling-disabled.kql')
 
 resource scalingDisabledAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [for alert in scalingDisabledDefinitions: {
   name: '${alertNamePrefix}-${hostPoolName}-${alert.shortName}-${uniqueString(hostPoolResourceId)}'
@@ -92,7 +92,7 @@ var otherAlerts = [
     severity: 3
     evaluationFrequency: 'PT1H'
     windowSize: 'PT6H'
-    query: fillQuery(loadTextContent('../queries/scaling-removed.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/scaling-removed.kql'), queryValues)
     dimensions: ['HostPoolName', 'RemovedScalingPlan']
   }
   {
@@ -103,7 +103,7 @@ var otherAlerts = [
     severity: 2
     evaluationFrequency: 'PT15M'
     windowSize: 'PT1H'
-    query: fillQuery(loadTextContent('../queries/diagnostic-missing.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/diagnostic-missing.kql'), queryValues)
     dimensions: ['HostPoolName']
   }
 ]
@@ -129,7 +129,7 @@ resource personalUnhealthy 'Microsoft.Insights/scheduledQueryRules@2023-12-01' =
     severity: 1
     evaluationFrequency: 'PT5M'
     windowSize: 'PT45M'
-    query: fillQuery(loadTextContent('../queries/personal-unhealthy.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/personal-unhealthy.kql'), queryValues)
     dimensions: ['HostPoolName', 'PersonalSessionHost', 'PersonalAssignedUser']
   })
 }

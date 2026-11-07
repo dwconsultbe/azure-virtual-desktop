@@ -1,6 +1,6 @@
 targetScope = 'resourceGroup'
 
-import { hostPoolCollectorName, jobDiagnosticsName, storageCollectorName } from '../naming.bicep'
+import { hostPoolCollectorName, jobDiagnosticsName, storageCollectorName } from '../../naming.bicep'
 
 param location string
 param automationAccountName string

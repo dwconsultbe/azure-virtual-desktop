@@ -1,7 +1,7 @@
 targetScope = 'resourceGroup'
 
-import { storageCollectorName } from '../naming.bicep'
-import { fillQuery, queryRuleProperties, RuleContext } from '../rules.bicep'
+import { storageCollectorName } from '../../naming.bicep'
+import { fillQuery, queryRuleProperties, RuleContext } from '../../rules.bicep'
 
 param location string
 param storageAccountResourceId string
@@ -21,7 +21,7 @@ var ruleContext RuleContext = {
 }
 
 // The collector reports share ID in field 8. Group by share ID, never share name alone.
-var shareQuery = fillQuery(loadTextContent('../queries/share-capacity.kql'), {
+var shareQuery = fillQuery(loadTextContent('../../queries/share-capacity.kql'), {
   __STORAGE_ID__: storageAccountResourceId
   __RUNBOOK__: storageCollectorName(alertNamePrefix)
 })

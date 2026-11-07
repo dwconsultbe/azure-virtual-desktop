@@ -19,6 +19,8 @@ The two collector runbooks collect information that Azure Monitor does not provi
 
 Each enabled runbook has four hourly schedules, staggered 15 minutes apart, so it runs every 15 minutes. The storage schedules are created only when Azure Files accounts are configured. Runbook data is sent to Log Analytics through the Automation Account diagnostic setting. Alert rules check it together with AVD diagnostics, performance counters, event logs and Azure platform metrics.
 
+The deployment can also create a Log Analytics workspace, guest-data DCRs, DCR policy assignments and AVD diagnostic settings. These options are off by default. The guest-data DCR collects the `Perf` and `Event` data used by the alerts. The separate VM Insights DCR collects `DetailedMetrics` and is not required by these alert queries.
+
 Some alert ideas and query parts come from [Microsoft AMBA for Azure Virtual Desktop](https://azure.github.io/azure-monitor-baseline-alerts/patterns/specialized/avd/deploy/Avd-Deploy/index.html). This project is separate from Microsoft's solution.
 
 ## Main design choices
@@ -27,6 +29,8 @@ Some alert ideas and query parts come from [Microsoft AMBA for Azure Virtual Des
 - **Collectors use managed identity.** No credentials are stored in the runbooks. The identity receives only the required read permissions.
 - **You choose which alerts to turn on.** Add their IDs to `enabledAlertRuleIds` in the parameter file.
 - **You can use an existing Action Group or create one.** Choose the option in the parameter file.
+- **Guest data collection is optional.** Enable the DCRs and Policy assignments only when you want this deployment to configure AMA data collection. AMA must already be installed.
+- **AVD diagnostics are optional.** The template can configure host-pool and AVD workspace diagnostic settings. Check existing settings first to avoid sending the same category to the same workspace twice.
 
 ## Pool-specific alert names and upgrades
 
@@ -60,7 +64,10 @@ For the source implementation, see the [AMBA AVD Bicep template](https://github.
 ## Repository map
 
 - `src/main.bicep`: main Bicep template, deployed at subscription level.
-- `src/modules/`: alert, collector and role-assignment modules.
+- `src/modules/`: modules grouped by what they deploy.
+- `src/modules/alerts/`: alert rules and Action Group resources.
+- `src/modules/collectors/`: Automation Account setup and collector permissions.
+- `src/modules/data-collection/`: optional Log Analytics workspace, DCRs, policy assignments and AVD diagnostic settings.
 - `src/queries/`: KQL used by the alert rules.
 - `src/scripts/`: collector runbooks.
 - `src/collector-schedules.bicep`: Automation schedule resources.

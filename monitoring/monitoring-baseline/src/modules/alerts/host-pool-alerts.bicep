@@ -1,6 +1,6 @@
 targetScope = 'resourceGroup'
 
-import { fillQuery, hostPoolVmsFragment, queryRuleProperties, RuleContext } from '../rules.bicep'
+import { fillQuery, hostPoolVmsFragment, queryRuleProperties, RuleContext } from '../../rules.bicep'
 
 param location string
 param hostPoolResourceId string
@@ -36,7 +36,7 @@ var alertDefinitions = [
     severity: 3
     evaluationFrequency: 'PT1H'
     windowSize: 'PT1H'
-    query: fillQuery(loadTextContent('../queries/agent-upgrade.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/agent-upgrade.kql'), queryValues)
     dimensions: ['SessionHostName', 'SessionHostRG', 'Problem']
   }
   {
@@ -47,7 +47,7 @@ var alertDefinitions = [
     severity: 3
     evaluationFrequency: 'PT1H'
     windowSize: 'P1D'
-    query: fillQuery(loadTextContent('../queries/drained-idle.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/drained-idle.kql'), queryValues)
     dimensions: ['SessionHostName', 'SessionHostRG']
   }
   {
@@ -58,7 +58,7 @@ var alertDefinitions = [
     severity: 3
     evaluationFrequency: 'PT15M'
     windowSize: 'PT1H'
-    query: fillQuery(loadTextContent('../queries/autoscale-failures.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/autoscale-failures.kql'), queryValues)
     dimensions: ['ScalingPlanName']
   }
 ]
@@ -86,7 +86,7 @@ resource memoryAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [for
     severity: threshold.severity
     evaluationFrequency: 'PT5M'
     windowSize: 'PT15M'
-    query: fillQuery(loadTextContent('../queries/available-memory.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/available-memory.kql'), queryValues)
     dimensions: ['SessionHostName']
     timeAggregation: 'Minimum'
     metricMeasureColumn: 'AvailableMB'

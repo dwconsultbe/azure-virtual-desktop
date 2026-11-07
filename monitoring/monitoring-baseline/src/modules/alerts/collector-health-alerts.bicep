@@ -1,6 +1,6 @@
 targetScope = 'resourceGroup'
 
-import { fillQuery, queryRuleProperties, RuleContext } from '../rules.bicep'
+import { fillQuery, queryRuleProperties, RuleContext } from '../../rules.bicep'
 
 param location string
 param logAnalyticsWorkspaceResourceId string
@@ -25,8 +25,8 @@ var runbookList = join(map(runbookNames, name => '\'${name}\''), ', ')
 // The capacity, scaling plan, personal host and file share alerts read the collector output.
 // When a collector stops or fails they find no rows and resolve as if nothing were wrong,
 // so these two rules watch the collectors themselves.
-var jobFailedQuery = fillQuery(loadTextContent('../queries/collector-job-failed.kql'), { __RUNBOOKS__: runbookList })
-var outputStaleQuery = fillQuery(loadTextContent('../queries/collector-output-stale.kql'), { __RUNBOOKS__: runbookList })
+var jobFailedQuery = fillQuery(loadTextContent('../../queries/collector-job-failed.kql'), { __RUNBOOKS__: runbookList })
+var outputStaleQuery = fillQuery(loadTextContent('../../queries/collector-output-stale.kql'), { __RUNBOOKS__: runbookList })
 
 var ruleContext RuleContext = {
   workspaceResourceId: logAnalyticsWorkspaceResourceId

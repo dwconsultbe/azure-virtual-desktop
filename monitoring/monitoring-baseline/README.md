@@ -15,6 +15,7 @@ Here, a **collector** is a PowerShell runbook in Azure Automation that gathers e
 - Azure Monitor alert rules for host pools, session hosts, FSLogix, Azure Files, Azure NetApp Files and Service Health.
 - An Azure Automation Account with two PowerShell collectors.
 - Alerts that check the collectors, with runs spread out over time.
+- Optional Log Analytics workspace, guest-data DCRs, DCR association policies and AVD diagnostic settings.
 - KQL queries stored as separate files.
 - A pipeline that builds the Bicep templates, runs tests and shows a what-if preview before deployment. Deployment waits for approval only when an approval check is set on the Azure DevOps environment.
 

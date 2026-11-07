@@ -17,6 +17,27 @@ param logAnalyticsWorkspace = {
   resourceGroupName: 'REPLACE_WORKSPACE_RESOURCE_GROUP'
   name: 'REPLACE_WORKSPACE_NAME'
 }
+// Optional: create the workspace in the monitoring resource group instead of using the existing one.
+param createLogAnalyticsWorkspace = false
+param newLogAnalyticsWorkspaceName = ''
+param logAnalyticsWorkspaceRetentionInDays = 30
+
+// DCRs must use the same region as their destination workspace. For an existing workspace,
+// set this to that workspace's region before enabling either DCR.
+param dataCollectionRuleLocation = ''
+param deployAvdGuestDataDcr = false
+param deployVmInsightsDcr = false
+
+// The association policy applies to supported Windows VMs in each host-pool resource group.
+// AMA must already be installed. Existing VMs need a Policy remediation task after deployment.
+param associateDcrsWithPolicy = false
+param customWindowsImageIds = []
+
+// Optional AVD resource diagnostics. Add AVD workspace resources here only when
+// configureAvdDiagnostics is true. These are not Log Analytics workspaces.
+param configureAvdDiagnostics = false
+param avdWorkspaces = []
+
 // Keep false to use an existing Action Group. Set true to create one in the monitoring resource group.
 param createActionGroup = false
 // Required only when createActionGroup is false.

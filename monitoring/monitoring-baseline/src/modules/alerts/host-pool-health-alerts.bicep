@@ -1,6 +1,6 @@
 targetScope = 'resourceGroup'
 
-import { fillQuery, hostPoolVmsFragment, queryRuleProperties, RuleContext } from '../rules.bicep'
+import { fillQuery, hostPoolVmsFragment, queryRuleProperties, RuleContext } from '../../rules.bicep'
 
 param location string
 param hostPoolResourceId string
@@ -40,14 +40,14 @@ var diskThresholds = [
   { id: 'localDiskFree5', threshold: 5, severity: 1 }
 ]
 
-var localDiskQuery = fillQuery(loadTextContent('../queries/local-disk.kql'), queryValues)
+var localDiskQuery = fillQuery(loadTextContent('../../queries/local-disk.kql'), queryValues)
 
 var cpuThresholds = [
   { id: 'cpu85', threshold: 85, severity: 2, evaluationFrequency: 'PT30M', windowSize: 'PT1H' }
   { id: 'cpu95', threshold: 95, severity: 1, evaluationFrequency: 'PT5M', windowSize: 'PT15M' }
 ]
 
-var cpuQuery = fillQuery(loadTextContent('../queries/cpu-usage.kql'), queryValues)
+var cpuQuery = fillQuery(loadTextContent('../../queries/cpu-usage.kql'), queryValues)
 
 resource localDiskAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [for alert in diskThresholds: {
   name: '${alertNamePrefix}-${hostPoolName}-${alert.id}-${uniqueString(hostPoolResourceId)}'
@@ -100,7 +100,7 @@ resource healthCheckFailure 'Microsoft.Insights/scheduledQueryRules@2023-12-01' 
     severity: 1
     evaluationFrequency: 'PT15M'
     windowSize: 'PT15M'
-    query: fillQuery(loadTextContent('../queries/health-check.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/health-check.kql'), queryValues)
     dimensions: ['SessionHostName', 'SessionHostRG', 'HealthCheckDesc']
   })
 }
@@ -110,7 +110,7 @@ resource healthCheckFailure 'Microsoft.Insights/scheduledQueryRules@2023-12-01' 
 // code only catches both one bad host and a pool-wide problem that spreads over several hosts.
 var ignoredCodesFilter = empty(ignoredConnectionErrorCodes) ? '' : '| where CodeSymbolic !in~ (${join(map(ignoredConnectionErrorCodes, code => '\'${code}\''), ', ')})\n'
 
-var connectionFailureQuery = fillQuery(loadTextContent('../queries/connection-failure.kql'), union(queryValues, {
+var connectionFailureQuery = fillQuery(loadTextContent('../../queries/connection-failure.kql'), union(queryValues, {
   __IGNORED_FILTER__: ignoredCodesFilter
   __MIN_FAILURES__: string(connectionFailureMinFailures)
   __MIN_USERS__: string(connectionFailureMinUsers)
@@ -143,7 +143,7 @@ resource noResourcesAvailable 'Microsoft.Insights/scheduledQueryRules@2023-12-01
     severity: 1
     evaluationFrequency: 'PT15M'
     windowSize: 'PT15M'
-    query: fillQuery(loadTextContent('../queries/no-resources.kql'), queryValues)
+    query: fillQuery(loadTextContent('../../queries/no-resources.kql'), queryValues)
     dimensions: ['UserName']
   })
 }
