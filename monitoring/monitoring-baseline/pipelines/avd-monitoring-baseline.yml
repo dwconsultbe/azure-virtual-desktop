@@ -8,13 +8,16 @@ pr: none
 #   whatif : subscription what-if; the output is published as pipeline artifact 'what-if'.
 #   deploy : runs after what-if. It pauses only when an approval check is configured on the environment.
 #
-# Fill in the two parameters below in the "Run pipeline" panel. You do not need to edit this file.
-# Optional one-time setup: Pipelines > Environments > 'avd-monitoring-baseline' > Approvals and checks > Approvals.
+# One-time setup:
+#   1. Replace REPLACE_SERVICE_CONNECTION below with the exact name of your Azure service connection.
+#      The "Run pipeline" panel then shows it prefilled; you can still change it per run.
+#   2. Optional: Pipelines > Environments > 'avd-monitoring-baseline' > Approvals and checks > Approvals.
 
 parameters:
   - name: serviceConnection
     displayName: Azure service connection (exact name)
     type: string
+    default: REPLACE_SERVICE_CONNECTION   # <-- set your service connection name here, once
   - name: parameterFile
     displayName: Parameter file, relative to the monitoring-baseline folder
     type: string

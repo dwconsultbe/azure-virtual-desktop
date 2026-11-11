@@ -177,17 +177,30 @@ Choose one option. Both do the same: a preview of the changes, then the deployme
 
 ### Option B: Azure DevOps pipeline
 
-1. In Azure DevOps, go to **Pipelines > New pipeline** and select `pipelines/avd-monitoring-baseline.yml`.
-2. Select **Run pipeline** and fill in:
+1. Open `pipelines/avd-monitoring-baseline.yml` and replace `REPLACE_SERVICE_CONNECTION` with the exact name of your service connection. You do this once:
 
-   | Parameter | Value |
+   ```yaml
+   - name: serviceConnection
+     displayName: Azure service connection (exact name)
+     type: string
+     default: asc-avd-monitoring   # <-- your service connection name
+   ```
+
+2. Commit and push the change.
+3. In Azure DevOps, go to **Pipelines > New pipeline** and select `pipelines/avd-monitoring-baseline.yml`.
+4. Select **Run pipeline**. Both parameters are prefilled; change them only for a one-off run:
+
+   | Parameter | Default |
    | --- | --- |
-   | Azure service connection | The exact name of your service connection |
-   | Parameter file | Leave the default, unless your values are in another file |
+   | Azure service connection | The name you set in step 1 |
+   | Parameter file | `parameters/main.example.bicepparam` |
 
-3. On the first run, select **Permit** when Azure DevOps asks for access to the service connection and the `avd-monitoring-baseline` environment.
-4. Open the **what-if** artifact and review the planned changes.
-5. Wait for the **Deploy** stage to finish. It also imports the PowerShell modules, publishes the runbooks and creates the schedules.
+5. On the first run, select **Permit** when Azure DevOps asks for access to the service connection and the `avd-monitoring-baseline` environment.
+6. Open the **what-if** artifact and review the planned changes.
+7. Wait for the **Deploy** stage to finish. It also imports the PowerShell modules, publishes the runbooks and creates the schedules.
+
+> [!NOTE]
+> The run fails right away with an error about `REPLACE_SERVICE_CONNECTION`? Step 1 was skipped. Set the name in the YAML, or type it in the run panel.
 
 > [!TIP]
 > Want the pipeline to wait for your approval after the what-if? Add an approval in **Pipelines > Environments > avd-monitoring-baseline > Approvals and checks**.
