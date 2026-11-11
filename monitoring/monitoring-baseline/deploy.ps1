@@ -89,8 +89,21 @@ az deployment sub what-if `
     --name "avd-monitoring-$stamp" `
     --location $settings.deployment.value.location `
     --parameters $ParameterFile `
-    --result-format ResourceIdOnly
+    --result-format ResourceIdOnly 2>&1 | Tee-Object -Variable whatIfOutput
 if ($LASTEXITCODE -ne 0) { Stop-WithHint 'The preview failed.' 'Read the error above. The administrator guide has a troubleshooting table.' }
+
+# Explain the symbols, and the ones that tend to worry people.
+$whatIfLines = @($whatIfOutput | ForEach-Object { "$_" -replace "`e\[[0-9;]*m", '' })
+Write-Host "`nLegend:  + create   ~ modify   ! deploy (Azure cannot predict the changes)   * ignore   = no change   - delete" -ForegroundColor DarkGray
+# Only lines with a resource ID count; the what-if header also lists the symbols.
+$resourceLine = '\s+[A-Za-z]+\.[A-Za-z]+/'
+if ($whatIfLines -match "^\s*\*$resourceLine") {
+    Write-Host '* Ignore: these resources already exist in the resource group but are not part of this template.' -ForegroundColor Yellow
+    Write-Host '  The deployment does not change or delete them. They may be left over from an earlier version.' -ForegroundColor Yellow
+}
+if ($whatIfLines -match "^\s*-$resourceLine") {
+    Write-Host '- Delete: review these resources carefully before you continue.' -ForegroundColor Red
+}
 
 if (-not $Yes) {
     $answer = Read-Host "`nDeploy these changes to '$($account.name)'? Type yes to continue"

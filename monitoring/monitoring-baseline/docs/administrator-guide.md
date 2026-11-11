@@ -164,6 +164,9 @@ Choose one option. Both do the same: a preview of the changes, then the deployme
    ```
 
 3. Check the summary and the preview, then type `yes`.
+
+   > [!TIP]
+   > A `*` in the preview means **ignore**: the resource already exists in the resource group but is not part of the template, for example a leftover from an earlier version. The deployment does not touch it.
 4. Wait until the script shows **Next steps** (about 5 to 10 minutes).
 
 | Option | Use when |
