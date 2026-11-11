@@ -94,7 +94,7 @@ function Sync-JobSchedule {
 $offsets = @(15, 30, 45, 60)
 for ($index = 0; $index -lt $offsets.Count; $index++) {
     Sync-JobSchedule `
-        -RunbookName "$NamePrefix-host-pool-collector" `
+        -RunbookName 'avd-host-pool-collector' `
         -ScheduleName "$NamePrefix-host-pool-$index" `
         -Parameters @{
             HostPoolResourceIds = ($HostPoolResourceIds -join ',')
@@ -106,7 +106,7 @@ for ($index = 0; $index -lt $offsets.Count; $index++) {
 if ($FileStorageAccountResourceIds.Count -gt 0) {
     for ($index = 0; $index -lt $offsets.Count; $index++) {
         Sync-JobSchedule `
-            -RunbookName "$NamePrefix-storage-collector" `
+            -RunbookName 'avd-storage-collector' `
             -ScheduleName "$NamePrefix-azure-files-$index" `
             -Parameters @{
                 StorageAccountResourceIds = ($FileStorageAccountResourceIds -join ',')
@@ -114,7 +114,7 @@ if ($FileStorageAccountResourceIds.Count -gt 0) {
             }
     }
 } else {
-    $storageRunbookName = "$NamePrefix-storage-collector"
+    $storageRunbookName = 'avd-storage-collector'
     $storageScheduleNames = @($offsets | ForEach-Object -Begin { $index = 0 } -Process { "$NamePrefix-azure-files-$index"; $index++ })
     $storageLinks = @($existing | Where-Object {
         $_.properties.runbook.name -eq $storageRunbookName -and $_.properties.schedule.name -in $storageScheduleNames

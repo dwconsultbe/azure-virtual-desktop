@@ -25,7 +25,7 @@ var ruleContext RuleContext = {
 var queryValues = {
   __COLLECTOR_ROWS__: collectorRowsFragment
   __HOST_POOL_ID__: hostPoolResourceId
-  __RUNBOOK__: hostPoolCollectorName(alertNamePrefix)
+  __RUNBOOK__: hostPoolCollectorName()
 }
 
 // Pooled host pools only: Personal pools have no meaningful session limit, so their load

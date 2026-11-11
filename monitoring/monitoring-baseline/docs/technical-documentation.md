@@ -8,6 +8,8 @@ The solution uses Azure Monitor, Log Analytics and Azure Automation:
 
 Here, a **collector** is a PowerShell runbook in Azure Automation that gathers extra monitoring data.
 
+The workspace, Azure Monitor Agent and guest-data DCR shown in the diagram are existing prerequisites. This deployment does not create them.
+
 [![Azure Virtual Desktop monitoring architecture](images/avd-monitoring-architecture.png)](images/avd-monitoring-architecture.png)
 
 [Editable Draw.io source](images/avd-monitoring-architecture.drawio).
@@ -19,18 +21,17 @@ The two collector runbooks collect information that Azure Monitor does not provi
 
 Each enabled runbook has four hourly schedules, staggered 15 minutes apart, so it runs every 15 minutes. The storage schedules are created only when Azure Files accounts are configured. Runbook data is sent to Log Analytics through the Automation Account diagnostic setting. Alert rules check it together with AVD diagnostics, performance counters, event logs and Azure platform metrics.
 
-The deployment can also create a Log Analytics workspace, guest-data DCRs, DCR policy assignments and AVD diagnostic settings. These options are off by default. The guest-data DCR collects the `Perf` and `Event` data used by the alerts. The separate VM Insights DCR collects `DetailedMetrics` and is not required by these alert queries.
+The deployment uses an existing Log Analytics workspace and creates AVD host-pool diagnostic settings that send data to it, unless `configureDiagnostics` is `false` for a pool that already has them. The workspace, Azure Monitor Agent and a DCR for the required `Perf` and `Event` data are prerequisites. Installing AMA and associating the DCR with each session-host VM are manual setup steps. The deployment does not create or associate the DCR, discover VMs, or create those VM associations.
 
 Some alert ideas and query parts come from [Microsoft AMBA for Azure Virtual Desktop](https://azure.github.io/azure-monitor-baseline-alerts/patterns/specialized/avd/deploy/Avd-Deploy/index.html). This project is separate from Microsoft's solution.
 
 ## Main design choices
 
+- **Three parameter blocks keep setup small.** `deployment` has the region, notification email, existing workspace details and monitoring resource group name, `hostPools` lists pools, and `additionalResources` is for optional storage and alert selection. The template creates the monitoring resource group, Action Group and Automation Account.
 - **Log Analytics is the main place for queries.** It receives AVD diagnostics, collector data, performance counters and event logs.
 - **Collectors use managed identity.** No credentials are stored in the runbooks. The identity receives only the required read permissions.
-- **You choose which alerts to turn on.** Add their IDs to `enabledAlertRuleIds` in the parameter file.
-- **You can use an existing Action Group or create one.** Choose the option in the parameter file.
-- **Guest data collection is optional.** Enable the DCRs and Policy assignments only when you want this deployment to configure AMA data collection. AMA must already be installed.
-- **AVD diagnostics are optional.** The template can configure host-pool and AVD workspace diagnostic settings. Check existing settings first to avoid sending the same category to the same workspace twice.
+- **VM data setup is a prerequisite.** You install AMA and associate a DCR with session-host VMs yourself. Repeat this for new VMs.
+- **You choose which alerts to turn on.** Add their IDs under `additionalResources.enabledAlertRuleIds` in the parameter file.
 
 ## Pool-specific alert names and upgrades
 
@@ -52,8 +53,8 @@ This project follows Microsoft's AMBA pattern for Azure Virtual Desktop and adap
 | --- | --- | --- |
 | Collector scripts | Runbooks are kept in `src/scripts` and published by the pipeline after deployment. | AMBA gets its scripts from a separate file location. This project keeps the scripts with the code and uploads them during deployment. |
 | KQL queries | Queries are kept in separate files under `src/queries` and inserted into alert resources during the Bicep build. | AMBA puts many queries inside its Bicep template. Here, each query has its own file, so it is easier to read and change. |
-| Alert selection | Each alert is enabled by adding its ID to `enabledAlertRuleIds`. | AMBA turns its alert set on or off. Here, you can choose which alert rules to enable. |
-| Alert rule names | Names include the alert prefix, host-pool name, alert type and a short unique value based on the full host-pool resource ID. | AMBA also uses a prefix and host-pool name. This project adds the unique value to help prevent name clashes when pools in different resource groups or subscriptions have the same name. |
+| Alert selection | Add an alert ID to `additionalResources.enabledAlertRuleIds` to enable that rule. | This project lets you select alert rules one by one. |
+| Alert rule names | An optional prefix starts alert names, followed by the `avd-ar` marker, host-pool or storage-account name, alert type and a unique suffix. | Pool and storage names make rules easier to identify. The suffix helps avoid clashes when resources share a name. |
 | Pool-type rules | `hostPoolType` controls which pool-specific rules Bicep creates: capacity alerts for pooled pools and an unhealthy-host alert for personal pools. | AMBA also has a personal-host health query. Here, Bicep uses the pool type to choose which rules to create. Set the type in the parameter file; if omitted, it defaults to `Pooled`. |
 | Deployment | The included Azure DevOps pipeline builds and tests the templates, runs a subscription `what-if`, and publishes the results before deployment. | AMBA uses a portal form to start deployment. This project uses a pipeline and saves the `what-if` output with the pipeline run. |
 | Automation schedules | Bicep creates the schedules. A deployment script then creates or updates the links between schedules and runbooks. | After deployment, a script links each schedule to its runbook. On later runs, it updates existing links instead of trying to create them again. |
@@ -67,7 +68,7 @@ For the source implementation, see the [AMBA AVD Bicep template](https://github.
 - `src/modules/`: modules grouped by what they deploy.
 - `src/modules/alerts/`: alert rules and Action Group resources.
 - `src/modules/collectors/`: Automation Account setup and collector permissions.
-- `src/modules/data-collection/`: optional Log Analytics workspace, DCRs, policy assignments and AVD diagnostic settings.
+- `src/modules/data-collection/`: AVD host-pool diagnostic settings.
 - `src/queries/`: KQL used by the alert rules.
 - `src/scripts/`: collector runbooks.
 - `src/collector-schedules.bicep`: Automation schedule resources.
@@ -81,13 +82,15 @@ For the source implementation, see the [AMBA AVD Bicep template](https://github.
 
 The catalog below lists the IDs you can enable. To find an ID, look up the alert by its purpose in the list and copy its exact ID, not its display name.
 
-Open `parameters/main.example.bicepparam` and add the IDs you want to `enabledAlertRuleIds`. For example, to enable the two collector health alerts:
+Open `parameters/main.example.bicepparam` and add the IDs under `additionalResources.enabledAlertRuleIds`. For example, to enable the two collector health alerts:
 
 ```bicep
-param enabledAlertRuleIds = [
-  'collectorFailed'
-  'collectorStale'
-]
+param additionalResources = {
+  enabledAlertRuleIds: [
+    'collectorFailed'
+    'collectorStale'
+  ]
+}
 ```
 
 Alerts are deployed disabled unless their exact ID is listed. The alert definitions use these same IDs in `src/modules/`.

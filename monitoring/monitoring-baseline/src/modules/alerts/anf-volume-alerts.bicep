@@ -19,7 +19,7 @@ var thresholds = [
 ]
 
 resource volumeAlerts 'Microsoft.Insights/metricAlerts@2018-03-01' = [for alert in thresholds: {
-  name: '${alertNamePrefix}-${alert.id}-${uniqueString(volumeResourceId)}'
+  name: '${alertNamePrefix}-${volumeName}-${alert.id}-${uniqueString(volumeResourceId)}'
   location: 'global'
   properties: {
     description: '${descriptionPrefix}Azure NetApp Files volume ${volumeName} has reached ${alert.consumed}% consumed capacity. Expand the volume or free space.'

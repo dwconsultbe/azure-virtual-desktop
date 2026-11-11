@@ -13,7 +13,7 @@ var incidentTypes = [
 ]
 
 resource serviceHealthAlerts 'Microsoft.Insights/activityLogAlerts@2020-10-01' = [for incident in incidentTypes: {
-  name: '${alertNamePrefix}-service-health-${incident.shortName}'
+  name: '${alertNamePrefix}-service-health-${incident.shortName}-${uniqueString(actionGroupResourceId, incident.shortName)}'
   location: 'global'
   properties: {
     enabled: contains(enabledAlertRuleIds, incident.id)

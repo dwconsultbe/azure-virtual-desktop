@@ -15,7 +15,7 @@ Here, a **collector** is a PowerShell runbook in Azure Automation that gathers e
 - Azure Monitor alert rules for host pools, session hosts, FSLogix, Azure Files, Azure NetApp Files and Service Health.
 - An Azure Automation Account with two PowerShell collectors.
 - Alerts that check the collectors, with runs spread out over time.
-- Optional Log Analytics workspace, guest-data DCRs, DCR association policies and AVD diagnostic settings.
+- A monitoring resource group and host-pool diagnostic settings (can be skipped per pool when they already exist). The Log Analytics workspace, Azure Monitor Agent and guest-data DCR must already be set up.
 - KQL queries stored as separate files.
 - A pipeline that builds the Bicep templates, runs tests and shows a what-if preview before deployment. Deployment waits for approval only when an approval check is set on the Azure DevOps environment.
 
@@ -23,7 +23,7 @@ Here, a **collector** is a PowerShell runbook in Azure Automation that gathers e
 
 Read the [administrator guide](docs/administrator-guide.md) first. It explains the values you need to change and the permissions needed by the Azure DevOps service connection and the Automation Account identity.
 
-The example parameter file is not ready to deploy. Replace every `REPLACE_*` value first. The pipeline stops if any are left. Review the what-if output. If you set an approval check, do this before approving the deployment.
+The example parameter file has three input blocks: `deployment`, `hostPools` and optional `additionalResources`. Set the region, notification email, existing Log Analytics workspace, monitoring resource group name and host-pool details. Before deployment, make sure Azure Monitor Agent is installed and a DCR sends the required performance counters and Windows events to that workspace. Associate the DCR with every session-host VM, including new VMs. The deployment does not create a workspace or DCR. Alert rules are disabled until selected by ID. The pipeline runs a what-if before deployment; configure an environment approval check if you want it to pause for review.
 
 ## Repository layout
 

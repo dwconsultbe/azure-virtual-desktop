@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $built = & (Join-Path $PSScriptRoot 'Get-BuiltParameters.ps1') -ParameterFile $ParameterFile
-$location = $built.parameters.location.value
+$location = $built.parameters.deployment.value.location
 
 $deploymentJson = az deployment sub create `
     --name $DeploymentName `
@@ -17,8 +17,10 @@ $deploymentJson = az deployment sub create `
 if ($LASTEXITCODE -ne 0) { throw 'AVD monitoring deployment failed.' }
 
 $outputs = ($deploymentJson | Out-String | ConvertFrom-Json -Depth 100).properties.outputs
-$resourceGroup = $built.parameters.monitoringResourceGroupName.value
+$resourceGroup = $outputs.monitoringResourceGroupName.value
 $account = $outputs.automationAccountName.value
+Write-Host "Monitoring resource group: $resourceGroup"
+Write-Host "Log Analytics workspace: $($outputs.logAnalyticsWorkspaceResourceId.value)"
 
 az extension add --name automation --yes
 if ($LASTEXITCODE -ne 0) { throw 'Azure Automation CLI extension installation failed.' }
@@ -26,7 +28,11 @@ if ($LASTEXITCODE -ne 0) { throw 'Azure Automation CLI extension installation fa
 & (Join-Path $PSScriptRoot 'Wait-AutomationModules.ps1') `
     -ResourceGroup $resourceGroup `
     -AccountName $account `
-    -ExpectedModules $built.parameters.azModuleVersions.value
+    -ExpectedModules @{
+        'Az.Accounts' = '5.5.3'
+        'Az.DesktopVirtualization' = '6.0.0'
+        'Az.Storage' = '9.7.2'
+    }
 
 $runbooks = [ordered]@{
     $outputs.hostPoolRunbookName.value = 'src/scripts/collect-host-pools.ps1'
@@ -41,7 +47,7 @@ $runbooks = [ordered]@{
     -DeploymentName $ScheduleDeploymentName `
     -ResourceGroup $resourceGroup `
     -AccountName $account `
-    -NamePrefix $built.parameters.alertNamePrefix.value `
+    -NamePrefix $outputs.collectorNamePrefix.value `
     -HostPoolResourceIds @($outputs.hostPoolResourceIds.value) `
     -ScalingPlanResourceIds @($outputs.scalingPlanResourceIds.value) `
     -FileStorageAccountResourceIds @($outputs.fileStorageAccountResourceIds.value)

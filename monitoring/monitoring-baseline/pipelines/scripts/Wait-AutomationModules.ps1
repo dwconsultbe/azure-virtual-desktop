@@ -15,9 +15,13 @@ $subscriptionId = az account show --query id --output tsv
 if ($LASTEXITCODE -ne 0) { throw 'Could not determine the deployment subscription.' }
 
 foreach ($moduleName in $ModuleNames) {
-    $property = $ExpectedModules.PSObject.Properties[$moduleName]
-    if (-not $property -or -not $property.Value) { throw "No version configured for Automation module $moduleName." }
-    $expectedVersion = $property.Value
+    if ($ExpectedModules -is [System.Collections.IDictionary]) {
+        $expectedVersion = $ExpectedModules[$moduleName]
+    } else {
+        $property = $ExpectedModules.PSObject.Properties[$moduleName]
+        $expectedVersion = if ($property) { $property.Value } else { $null }
+    }
+    if ([string]::IsNullOrWhiteSpace([string]$expectedVersion)) { throw "No version configured for Automation module $moduleName." }
 
     $moduleUrl = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$ResourceGroup/providers/Microsoft.Automation/automationAccounts/$AccountName/modules/${moduleName}?api-version=2023-11-01"
     $moduleReady = $false

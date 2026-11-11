@@ -4,10 +4,10 @@
 // first deployment already created, so nothing is renamed.
 
 @export()
-func hostPoolCollectorName(prefix string) string => '${prefix}-host-pool-collector'
+func hostPoolCollectorName() string => 'avd-host-pool-collector'
 
 @export()
-func storageCollectorName(prefix string) string => '${prefix}-storage-collector'
+func storageCollectorName() string => 'avd-storage-collector'
 
 @export()
 func jobDiagnosticsName(prefix string) string => '${prefix}-monitoring-jobs-to-law'

@@ -62,7 +62,7 @@ resource jobDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-previe
 
 resource hostPoolRunbook 'Microsoft.Automation/automationAccounts/runbooks@2023-11-01' = {
   parent: automationAccount
-  name: hostPoolCollectorName(namePrefix)
+  name: hostPoolCollectorName()
   location: location
   dependsOn: [azModules]
   properties: {
@@ -75,7 +75,7 @@ resource hostPoolRunbook 'Microsoft.Automation/automationAccounts/runbooks@2023-
 
 resource storageRunbook 'Microsoft.Automation/automationAccounts/runbooks@2023-11-01' = {
   parent: automationAccount
-  name: storageCollectorName(namePrefix)
+  name: storageCollectorName()
   location: location
   dependsOn: [azModules]
   properties: {

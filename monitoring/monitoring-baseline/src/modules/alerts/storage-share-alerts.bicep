@@ -23,7 +23,7 @@ var ruleContext RuleContext = {
 // The collector reports share ID in field 8. Group by share ID, never share name alone.
 var shareQuery = fillQuery(loadTextContent('../../queries/share-capacity.kql'), {
   __STORAGE_ID__: storageAccountResourceId
-  __RUNBOOK__: storageCollectorName(alertNamePrefix)
+  __RUNBOOK__: storageCollectorName()
 })
 
 var thresholds = [
@@ -32,7 +32,7 @@ var thresholds = [
 ]
 
 resource shareCapacityAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [for alert in thresholds: {
-  name: '${alertNamePrefix}-${alert.shortName}-${uniqueString(storageAccountResourceId)}'
+  name: '${alertNamePrefix}-${storageAccountName}-${alert.shortName}-${uniqueString(storageAccountResourceId)}'
   location: location
   kind: 'LogAlert'
   properties: queryRuleProperties(ruleContext, {

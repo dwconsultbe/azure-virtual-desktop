@@ -60,7 +60,7 @@ var collectorAlerts = [
 ]
 
 resource alertRules 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [for alert in collectorAlerts: {
-  name: '${alertNamePrefix}-${alert.shortName}'
+  name: '${alertNamePrefix}-${alert.shortName}-${uniqueString(logAnalyticsWorkspaceResourceId)}'
   location: location
   kind: 'LogAlert'
   properties: queryRuleProperties(ruleContext, alert)

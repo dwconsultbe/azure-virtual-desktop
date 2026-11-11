@@ -26,7 +26,7 @@ var fileMetrics = [
 ]
 
 resource fileAlerts 'Microsoft.Insights/metricAlerts@2018-03-01' = [for item in fileMetrics: {
-  name: '${alertNamePrefix}-${item.id}-${uniqueString(storageAccountResourceId)}'
+  name: '${alertNamePrefix}-${storageAccount.name}-${item.id}-${uniqueString(storageAccountResourceId)}'
   location: 'global'
   properties: {
     description: '${descriptionPrefix}Azure Files ${item.metric} crossed ${item.threshold} on storage account ${storageAccount.name}. Check share and storage performance.'
@@ -55,7 +55,7 @@ resource fileAlerts 'Microsoft.Insights/metricAlerts@2018-03-01' = [for item in 
 }]
 
 resource shareThrottling 'Microsoft.Insights/metricAlerts@2018-03-01' = {
-  name: '${alertNamePrefix}-files-throttling-${uniqueString(storageAccountResourceId)}'
+  name: '${alertNamePrefix}-${storageAccount.name}-files-throttling-${uniqueString(storageAccountResourceId)}'
   location: 'global'
   properties: {
     description: '${descriptionPrefix}Azure Files transactions were throttled for a monitored file service on ${storageAccount.name}. Review IOPS and throughput limits.'

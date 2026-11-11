@@ -2,7 +2,9 @@ __HOST_POOL_VMS__
 Perf
 | where TimeGenerated > ago(15m)
 | where ObjectName == 'LogicalDisk' and CounterName == '% Free Space'
-| where InstanceName !in~ ('D:', '_Total')
+// Drive letters only: mounted FSLogix VHDX files and recovery partitions report as HarddiskVolumeN.
+// D: is the Azure temporary disk on most VM sizes.
+| where InstanceName matches regex @'^[A-Za-z]:$' and InstanceName !~ 'D:'
 | extend VMResourceId = tolower(_ResourceId)
 | summarize FreePercent = round(avg(CounterValue), 1) by VMResourceId, InstanceName
 | join kind=inner HostPoolVMs on VMResourceId

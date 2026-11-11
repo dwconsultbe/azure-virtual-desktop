@@ -3,16 +3,14 @@ pr: none
 
 # Deploys the AVD monitoring baseline (alert rules + in-repository collectors).
 #
-# Flow:  build  ->  whatif  ->  deploy (manual approval on the environment)
+# Flow:  build  ->  whatif  ->  deploy
 #   build  : compiles Bicep, checks the parameter file, runs the collector tests. No Azure access needed.
 #   whatif : subscription what-if; the output is published as pipeline artifact 'what-if'.
-#   deploy : runs only after an approver has reviewed the what-if (approval check on the environment).
+#   deploy : runs after what-if. It pauses only when an approval check is configured on the environment.
 #
 # One-time setup in Azure DevOps: Pipelines > Environments > 'avd-monitoring-baseline' > Approvals and checks > Approvals.
 
 variables:
-  # The project lives in a subfolder of the repository, so every step sets workingDirectory to it.
-  projectDir: $(System.DefaultWorkingDirectory)/monitoring/monitoring-baseline
   templateFile: src/main.bicep
   environmentName: avd-monitoring-baseline
   parameterFile: parameters/main.example.bicepparam
@@ -30,6 +28,23 @@ stages:
         steps:
           - checkout: self
             fetchDepth: 1
+
+          - pwsh: |
+              $ErrorActionPreference = 'Stop'
+              $projectMatches = @(Get-ChildItem -LiteralPath $env:BUILD_SOURCESDIRECTORY -Filter 'Deploy-MonitoringBaseline.ps1' -File -Recurse |
+                Where-Object {
+                  $_.Directory.Name -eq 'scripts' -and
+                  $_.Directory.Parent.Name -eq 'pipelines' -and
+                  (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'src/main.bicep')) -and
+                  (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'parameters/main.example.bicepparam'))
+                })
+              if ($projectMatches.Count -ne 1) {
+                throw "Expected one monitoring-baseline project in the repository, found $($projectMatches.Count)."
+              }
+              $projectDir = $projectMatches[0].Directory.Parent.Parent.FullName
+              Write-Host "##vso[task.setvariable variable=projectDir]$projectDir"
+              Write-Host "Found monitoring baseline at: $projectDir"
+            displayName: Find project folder
 
           - pwsh: |
               $ErrorActionPreference = 'Stop'
@@ -58,7 +73,7 @@ stages:
           - pwsh: |
               $ErrorActionPreference = 'Stop'
               az bicep install --only-show-errors
-              if ($LASTEXITCODE -ne 0) { throw 'Pinned Bicep installation failed.' }
+              if ($LASTEXITCODE -ne 0) { throw 'Bicep installation failed.' }
               az bicep build --file '$(templateFile)' --stdout | Out-Null
               if ($LASTEXITCODE -ne 0) { throw 'Bicep build failed.' }
               az bicep build --file src/collector-schedules.bicep --stdout | Out-Null
@@ -68,11 +83,6 @@ stages:
               # Inspect compiled parameter values, not source comments.
               if (($built.parameters | ConvertTo-Json -Depth 100 -Compress) -match 'REPLACE_') {
                 throw "Configure $($env:PARAMETER_FILE) before running Azure what-if."
-              }
-              $createActionGroup = [bool]$built.parameters.createActionGroup.value
-              $existingActionGroup = $built.parameters.existingActionGroup.value
-              if (-not $createActionGroup -and [string]::IsNullOrWhiteSpace([string]$existingActionGroup.name)) {
-                throw 'Set existingActionGroup details or set createActionGroup to true.'
               }
             displayName: Build Bicep and check parameters
             workingDirectory: $(projectDir)
@@ -100,6 +110,23 @@ stages:
           - checkout: self
             fetchDepth: 1
 
+          - pwsh: |
+              $ErrorActionPreference = 'Stop'
+              $projectMatches = @(Get-ChildItem -LiteralPath $env:BUILD_SOURCESDIRECTORY -Filter 'Deploy-MonitoringBaseline.ps1' -File -Recurse |
+                Where-Object {
+                  $_.Directory.Name -eq 'scripts' -and
+                  $_.Directory.Parent.Name -eq 'pipelines' -and
+                  (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'src/main.bicep')) -and
+                  (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'parameters/main.example.bicepparam'))
+                })
+              if ($projectMatches.Count -ne 1) {
+                throw "Expected one monitoring-baseline project in the repository, found $($projectMatches.Count)."
+              }
+              $projectDir = $projectMatches[0].Directory.Parent.Parent.FullName
+              Write-Host "##vso[task.setvariable variable=projectDir]$projectDir"
+              Write-Host "Found monitoring baseline at: $projectDir"
+            displayName: Find project folder
+
           - task: AzureCLI@2
             displayName: Run subscription what-if
             inputs:
@@ -110,9 +137,9 @@ stages:
               inlineScript: |
                 $ErrorActionPreference = 'Stop'
                 az bicep install --only-show-errors
-                if ($LASTEXITCODE -ne 0) { throw 'Pinned Bicep installation failed.' }
+                if ($LASTEXITCODE -ne 0) { throw 'Bicep installation failed.' }
                 $built = & ./pipelines/scripts/Get-BuiltParameters.ps1 -ParameterFile $env:PARAMETER_FILE
-                $location = $built.parameters.location.value
+                $location = $built.parameters.deployment.value.location
                 $outFile = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY 'what-if.txt'
                 New-Item -ItemType File -Path $outFile -Force | Out-Null
                 az deployment sub what-if `
@@ -143,6 +170,23 @@ stages:
               steps:
                 - checkout: self
                   fetchDepth: 1
+
+                - pwsh: |
+                    $ErrorActionPreference = 'Stop'
+                    $projectMatches = @(Get-ChildItem -LiteralPath $env:BUILD_SOURCESDIRECTORY -Filter 'Deploy-MonitoringBaseline.ps1' -File -Recurse |
+                      Where-Object {
+                        $_.Directory.Name -eq 'scripts' -and
+                        $_.Directory.Parent.Name -eq 'pipelines' -and
+                        (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'src/main.bicep')) -and
+                        (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'parameters/main.example.bicepparam'))
+                      })
+                    if ($projectMatches.Count -ne 1) {
+                      throw "Expected one monitoring-baseline project in the repository, found $($projectMatches.Count)."
+                    }
+                    $projectDir = $projectMatches[0].Directory.Parent.Parent.FullName
+                    Write-Host "##vso[task.setvariable variable=projectDir]$projectDir"
+                    Write-Host "Found monitoring baseline at: $projectDir"
+                  displayName: Find project folder
 
                 - task: AzureCLI@2
                   displayName: Deploy subscription template

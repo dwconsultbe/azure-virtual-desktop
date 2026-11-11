@@ -1,192 +1,100 @@
 # Administrator guide
 
-This guide is for the person who installs and configures the monitoring solution.
+This guide explains how to deploy the monitoring baseline and prepare the data it needs.
 
-For alert handling, read the [helpdesk guide](helpdesk-guide.md). For full technical details, read the [technical documentation](technical-documentation.md).
+For alert handling, read the [helpdesk guide](helpdesk-guide.md). For the design and alert list, read the [technical documentation](technical-documentation.md).
 
-## What the solution does
+## What it creates
 
-The solution creates Azure Monitor alerts for Azure Virtual Desktop. It monitors:
+The deployment creates a monitoring resource group, Action Group, Automation Account, runbooks, schedules, host-pool diagnostic settings and alert rules. It uses an existing Log Analytics workspace. It does not create a workspace or a guest-data DCR.
 
-- host pool capacity and connections;
-- session host health, CPU, memory and disk space;
-- FSLogix and profile storage;
-- Azure Files and Azure NetApp Files;
-- scaling plans and Azure Service Health;
-- the monitoring collectors themselves.
+Alert rules are created disabled. Add the alert IDs you want to enable to `additionalResources.enabledAlertRuleIds` after checking that their source data is available.
 
 ## Before you start
 
-You need:
+Before deployment, you need:
 
-- an Azure subscription;
-- a resource group for the monitoring resources, or permission to create one;
-- an existing Log Analytics workspace, or permission to create one;
-- an existing Action Group, or an email address for a new Action Group;
-- the names and resource groups of the host pools and storage resources you want to monitor;
-- an Azure DevOps service connection with the permissions listed below.
+- an Azure subscription and permission to create the resources listed above;
+- the name and resource group of each host pool;
+- an existing Log Analytics workspace, including its name and resource group;
+- Azure Monitor Agent installed on each session-host VM, with a DCR associated to each VM;
+- an email address for alert notifications;
+- an Azure DevOps service connection with the permissions below.
 
-The solution can use an existing Log Analytics workspace or create one in the monitoring resource group. AVD diagnostics, guest data collection rules and their policy assignments are optional. Set `createMonitoringResourceGroup` to `true` to create the monitoring resource group, or use an existing one. You can also use an existing Action Group or create a new one with the template.
+The DCR must send Windows performance counters to the `Perf` table and Windows event logs to the `Event` table in the workspace. Collect the counters used by the alerts, including processor, memory, disk, process and Terminal Services counters. Collect `System`, `Application` warnings and errors, `Microsoft-Windows-TerminalServices-RemoteConnectionManager/Admin`, `Microsoft-Windows-TerminalServices-LocalSessionManager/Operational`, and `Microsoft-FSLogix-Apps` Admin and Operational events. Configure this before deploying the baseline, and check that the data is arriving. The baseline configures host-pool diagnostic settings to send AVD diagnostics to the same workspace.
 
-## Files you need
+## Set the three parameter blocks
 
-- `src/main.bicep`: main deployment template;
-- `src/collector-schedules.bicep`: schedule deployment;
-- `parameters/main.example.bicepparam`: example parameters;
-- `pipelines/avd-monitoring-baseline.yml`: Azure DevOps pipeline;
-- `tests/collector-contract.ps1`: tests that check the data returned by the collectors.
+Edit `parameters/main.example.bicepparam` in your clone and replace the `REPLACE_` values. The pipeline stops if any remain:
 
-Edit `parameters/main.example.bicepparam` in your private copy of the repository and replace every `REPLACE_*` value. Do not commit completed customer parameters to a public repository.
+1. `deployment`: set the Azure region, notification email and existing workspace name and resource group inside `logAnalyticsWorkspace`. Add `subscriptionId` there only if the workspace is in another subscription. Set `monitoringResourceGroupName`; the template creates the group if it does not exist. Keep this name stable, because a new name creates a new Automation Account, Action Group and alert rules next to the old ones. Earlier versions generated a `rg-avdmon-<unique>` name when it was omitted; for an existing deployment, enter that existing name. You can optionally set `resourcePrefix`. For example, `resourcePrefix: 'org-env'` makes alert names start with `org-env-avd-ar-` and the Action Group name start with `org-env-ag-avd-`. Without a prefix, these names start with `avd-ar-` and `ag-avd-` respectively.
+2. `hostPools`: add one entry for each host pool. Set `resourceGroupName` and `name`. Add `subscriptionId` only when that pool is in another subscription. Set `hostPoolType` to `Personal` only for personal pools. Put its scaling plan in `scalingPlanName`; it is expected to be in the same subscription and resource group as the pool. Set `configureDiagnostics` to `false` when the pool already sends its diagnostics to the workspace (see below).
+3. `additionalResources`: optional. Add Azure Files accounts or Azure NetApp Files volumes if you need their alerts. Add alert IDs here to turn on selected rules. Leave the block empty for the first deployment.
+
+### Existing host-pool diagnostic settings
+
+By default the deployment adds a diagnostic setting to each host pool. Azure does not allow two diagnostic settings on the same resource to send the same log category to the same workspace. If a host pool already sends its diagnostics to the workspace, for example because AVD Insights was configured, the deployment fails with a "Data sink is already used" error. Set `configureDiagnostics: false` for that pool and make sure the existing setting includes the `Management`, `Connection`, `Error`, `Checkpoint`, `HostRegistration` and `AgentHealthStatus` categories, plus `AutoscaleEvaluationPooled` when the pool uses a scaling plan.
+
+The host pool and its session-host VMs must be in the same resource group. You do not enter session-host VM IDs. The template uses the host pool's resource group for VM metric alerts.
+
+Changing `resourcePrefix` changes the Automation Account, alert-rule and Action Group names. Azure creates new resources and does not remove the old ones. A new Automation Account can leave the old collector schedules running, so check and disable or remove the old account's schedules after confirming the new deployment works. Remove old alert rules and Action Groups after confirming the new ones work.
+
+Example for a host pool in another subscription:
+
+```bicep
+param hostPools = [
+  {
+    subscriptionId: '<subscription-guid>'
+    resourceGroupName: 'rg-avd'
+    name: 'pool-production'
+  }
+]
+```
+
+The Automation Account name uses the optional prefix followed by `aa-avd-` and a unique suffix (for example, `org-env-aa-avd-<unique>`). The Action Group name uses the prefix followed by `ag-avd-` and a unique suffix. The runbooks use the fixed names `avd-host-pool-collector` and `avd-storage-collector`. The Action Group sends notifications to `deployment.notificationEmail`. Default alert rules are disabled until selected by ID.
 
 ## Required permissions
-
-The deployment uses the Azure DevOps service connection and the Automation Account identity. If you enable DCR policies, Azure Policy also uses a managed identity for each assignment.
 
 ### Azure DevOps service connection
 
 The service connection needs permission to:
 
-- create a deployment at subscription level;
-- **Contributor** on the monitoring resource group;
-- create role assignments on the resource groups where the Automation identity needs access. **User Access Administrator** or **Owner** can do this.
-- when using DCR policies, **Resource Policy Contributor** (or **Owner**) on each host-pool resource group to create policy assignments, and **User Access Administrator** (or **Owner**) there to grant the policy identity its role;
+- create a subscription deployment and resource groups;
+- create resources in the monitoring resource group;
+- create role assignments in each host-pool and storage resource group.
 
-The service connection creates the Automation Account, runbooks, schedules, diagnostic settings, alerts and role assignments. When `createMonitoringResourceGroup` is true, it also needs permission to create a resource group in the subscription.
+The last permission is normally provided by **User Access Administrator** or **Owner** at the required scopes. Cross-subscription host pools or storage also need permission in those subscriptions.
 
 ### Automation Account identity
 
-The template creates a system-assigned identity for the Automation Account. It receives:
+The deployment assigns the Automation Account's managed identity:
 
-- **Desktop Virtualization Reader** on resource groups with the selected host pools and scaling plans;
-- **Reader** on resource groups with the selected Azure Files accounts.
+- **Desktop Virtualization Reader** on each host-pool and scaling-plan resource group;
+- **Reader** on each Azure Files resource group.
 
-The runbooks only read data. They do not need passwords, storage keys or Contributor rights.
+The runbooks only read Azure configuration and usage data. They do not need storage keys or write access.
 
-The host pool collector uses **Desktop Virtualization Reader** to read host pools, session hosts, user sessions and scaling plans for its capacity, health and scaling checks. The Azure Files collector uses **Reader** to list shares and read their usage and quota values. It does not access file contents.
-
-The template gives these roles to the Automation identity during deployment. When you add a host pool or scaling plan to the parameter file and deploy again, the identity gets access to that resource group. Resources in the same resource group share one role assignment. For a resource in another subscription, add `subscriptionId` to its entry and make sure the service connection can create role assignments there.
-
-When `associateDcrsWithPolicy` is enabled, the template creates one built-in DCR association policy assignment per DCR and host-pool resource group. Each assignment identity gets **Monitoring Contributor** on that resource group so the policy can create DCR associations on matching VMs. This identity does not collect or read the VM data. The policy only applies to supported Windows images, plus any images listed in `customWindowsImageIds`.
-
-To collect data from another Azure Files account, add it to `fileStorageAccounts` and redeploy. The template grants **Reader** on that account's resource group.
-
-You can grant these roles on smaller parts of your Azure setup if your security rules require it.
-
-## Configure the parameters
-
-Open `parameters/main.example.bicepparam` and set:
-
-- the monitoring resource group and Azure region;
-- the Log Analytics workspace name and resource group;
-- whether to create a Log Analytics workspace in the monitoring resource group or use an existing workspace;
-- whether to deploy the AVD guest-data DCR, the separate VM Insights DCR, and DCR association policies;
-- the Log Analytics workspace region for DCRs when using an existing workspace;
-- whether to configure AVD host-pool and AVD workspace diagnostic settings, and the AVD workspace names when needed;
-- the existing Action Group name and resource group, if you are reusing one;
-- whether to use an existing Action Group or create a new one;
-- the new Action Group name and email receivers, when you create one;
-- the host pool names and resource groups;
-- session host VMs in the same resource group as their host pool, when OS Disk Bandwidth alerts are needed;
-- the Azure Files account, Azure NetApp Files volume and scaling plan names and resource groups, when used;
-- the Automation Account name and alert name prefix;
-- the Az PowerShell module versions.
-
-Keep `enabledAlertRuleIds` empty for the first deployment. Enable alerts after you confirm that the required diagnostic data is available.
-
-When `createActionGroup` is `false`, set `existingActionGroup` with the existing Action Group's name and resource group. When it is `true`, the template creates the Action Group in the monitoring resource group and uses the configured `actionGroupEmailReceivers`.
-
-For each resource, set `name` and `resourceGroupName`.
-
-- Leave out `subscriptionId` when the resource is in the deployment subscription.
-- For a resource in another subscription, add `subscriptionId` inside that resource's object.
-- The session host VMs must be in the same resource group as their host pool. OS Disk Bandwidth alerts use that resource group.
-
-```bicep
-param logAnalyticsWorkspace = {
-  subscriptionId: '<workspace-subscription-guid>'
-  resourceGroupName: 'rg-monitoring'
-  name: 'law-monitoring'
-}
-
-param hostPools = [
-  {
-    resourceGroupName: 'rg-avd'
-    name: 'pool-production'
-  }
-  {
-    subscriptionId: '<host-pool-subscription-guid>'
-    resourceGroupName: 'rg-avd-personal'
-    name: 'pool-personal'
-    hostPoolType: 'Personal'
-  }
-]
-```
-
-Add one entry for each host pool to `hostPools`. `hostPoolType` is optional and defaults to `Pooled`; set it to `Personal` for a personal pool. Add scaling plans to `scalingPlans` as a separate list. The order of the two lists does not need to match.
-
-## Optional data collection setup
-
-The example keeps these options off. Turn on only the parts you want to deploy:
-
-- `createLogAnalyticsWorkspace`: creates a workspace in the monitoring resource group. Set `newLogAnalyticsWorkspaceName`; the workspace uses the deployment `location` and the configured retention period.
-- `deployAvdGuestDataDcr`: creates a Windows DCR for the `Perf` counters and Windows event logs used by the alerts. It collects System events, Application warnings and errors, Terminal Services events, and FSLogix events. It also includes per-process counters, which can increase data ingestion; check your expected Azure Monitor costs.
-- `deployVmInsightsDcr`: creates a separate DCR for VM Insights `DetailedMetrics`. This is not needed by the alert queries in this project and can increase ingestion.
-- `associateDcrsWithPolicy`: assigns Microsoft's built-in DCR association policy in each host-pool resource group for every DCR enabled above. The Azure Monitor Agent (AMA) must already be installed on the session hosts. The policy covers supported Windows VMs in those resource groups, not only VMs registered in the host pools. Add custom image resource IDs to `customWindowsImageIds` if needed.
-- `configureAvdDiagnostics`: creates diagnostic settings on the host pools and the AVD workspaces listed in `avdWorkspaces`. It sends the categories used by AVD Insights to the selected Log Analytics workspace. It does not configure diagnostics on the Log Analytics workspace itself.
-
-When enabling AVD diagnostics, add each Azure Virtual Desktop workspace (not the Log Analytics workspace) to `avdWorkspaces`:
-
-```bicep
-param avdWorkspaces = [
-  {
-    resourceGroupName: 'rg-avd'
-    name: 'workspace-production'
-  }
-]
-```
-
-Set `dataCollectionRuleLocation` to the region of an existing Log Analytics workspace before deploying DCRs. When the template creates the workspace, it uses `location` for both the workspace and DCRs.
-
-Azure Policy applies to new matching VMs after evaluation. After the first deployment, create a remediation task for each DCR policy assignment to associate existing VMs. The policy does not install AMA. If AMA is missing, install it before running remediation. New session hosts in the host-pool resource group are picked up by later policy evaluations.
-
-Review existing diagnostic settings before setting `configureAvdDiagnostics` to `true`. Azure does not allow the same log category to be sent to the same workspace by multiple settings on one resource. This template creates a separate setting; it does not merge or change existing settings.
-
-## Deploy
+## Create and run the pipeline
 
 1. Create an Azure DevOps pipeline from `pipelines/avd-monitoring-baseline.yml`.
-2. Check the `projectDir` variable in the YAML. Set it to this project's folder in your repository. That folder must contain `src/main.bicep` and `parameters/`. Pipeline steps run from that folder.
-3. Open the pipeline variables and create these variables:
-   - `parameterFile`: the path to your completed parameter file, relative to the project folder;
-   - `serviceConnection`: the exact name of the Azure DevOps service connection.
-4. Do not allow pipeline runs to change these variables. Authorize the pipeline to use the service connection.
-5. Configure an approval check for the `avd-monitoring-baseline` environment in Azure DevOps.
-6. Run the pipeline and review the what-if results saved by the pipeline.
-7. Approve the deployment when the what-if looks correct.
+2. Add the pipeline variables `parameterFile` and `serviceConnection`. Set `parameterFile` to `parameters/main.example.bicepparam` (relative to the project folder), and set `serviceConnection` to the exact service connection name. Do not allow users to override these variables when they run the pipeline. The pipeline finds the project folder automatically, so the repository folder structure does not need to be configured.
+3. Authorize the pipeline to use the service connection.
+4. Run the pipeline. Review the what-if output; the deployment stage runs after the what-if stage. It waits for approval only if an approval check is configured on the `avd-monitoring-baseline` environment.
 
-The pipeline only runs when someone starts it. It builds and tests the solution first. After approval, it deploys the main template, waits for the required PowerShell modules, publishes the runbooks, then checks and updates the collector schedule links. This avoids errors when a schedule link already exists.
+After the Bicep deployment, the pipeline waits for the PowerShell modules, publishes the runbooks and creates or updates their schedules.
 
-## Check the first deployment
+## Check data and enable alerts
 
-In the Azure portal:
+1. Open the Log Analytics workspace and check that `Perf` and `Event` data arrive from every session-host VM. Check `WVDAgentHealthStatus` and collector tables as well.
+2. Add selected alert IDs to `additionalResources.enabledAlertRuleIds` and redeploy. Start with `collectorFailed` and `collectorStale`, then enable other alerts when their data is available.
 
-1. Open the new Automation Account.
-2. Check that both runbooks are published.
-3. Check the schedules and recent jobs.
-4. Open the configured Log Analytics workspace and confirm that collector output is arriving.
-5. Check `WVDAgentHealthStatus`, `Perf` and `Event` before enabling alerts that use those tables.
-
-Start with the collector alerts:
-
-- `collectorFailed`
-- `collectorStale`
-
-Then enable other alerts in small groups after checking their source data. The complete alert list is in the [technical documentation](technical-documentation.md).
+For every new session-host VM, install or confirm the Azure Monitor Agent and associate the existing DCR. This is not automatic.
 
 ## Privacy and support
 
-Some collector output and alert queries can include assigned user names or FSLogix profile paths. Keep access to the Automation Account, workspace and Action Group restricted. Review alert recipients and retention settings before enabling these alerts.
+Some collector output and alert queries can include user names or FSLogix profile paths. Restrict access to the Automation Account, workspace and Action Group, and review alert recipients and retention requirements.
 
-This open-source project is an example. Test it outside production first. It is not an official Microsoft solution and Microsoft does not support it.
+This project is an open-source example, not an official Microsoft solution. Test it outside production first. Microsoft does not provide support for it.
 
 ## Sources and license notice
 

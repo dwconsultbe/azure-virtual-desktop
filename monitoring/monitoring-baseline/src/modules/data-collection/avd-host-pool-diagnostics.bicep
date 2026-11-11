@@ -9,7 +9,6 @@ resource hostPool 'Microsoft.DesktopVirtualization/hostPools@2024-04-03' existin
 
 var categories = concat([
   'Management'
-  'Feed'
   'Connection'
   'Error'
   'Checkpoint'
@@ -27,10 +26,6 @@ resource diagnosticSetting 'Microsoft.Insights/diagnosticSettings@2021-05-01-pre
     logs: [for category in categories: {
       category: category
       enabled: true
-      retentionPolicy: {
-        enabled: false
-        days: 0
-      }
     }]
     metrics: []
   }

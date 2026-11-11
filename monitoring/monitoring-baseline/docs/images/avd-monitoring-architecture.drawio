@@ -64,7 +64,7 @@
         <mxCell id="label-ama" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8eb7dd;align=center;verticalAlign=middle;fontSize=11;fontColor=#1f4e79;" value="Azure Monitor Agent" vertex="1">
           <mxGeometry height="34" width="130" x="540" y="125" as="geometry" />
         </mxCell>
-        <mxCell id="label-dcr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8eb7dd;align=center;verticalAlign=middle;fontSize=11;fontColor=#1f4e79;" value="DCRs&lt;br&gt;metrics, counters and events" vertex="1">
+        <mxCell id="label-dcr" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8eb7dd;align=center;verticalAlign=middle;fontSize=11;fontColor=#1f4e79;" value="Guest-data DCR&lt;br&gt;metrics, counters and events" vertex="1">
           <mxGeometry height="48" width="160" x="860" y="118" as="geometry" />
         </mxCell>
         <mxCell id="label-queries" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#a9d5b7;align=center;verticalAlign=middle;fontSize=11;fontColor=#26643a;" value="KQL queries&lt;br&gt;and collectors" vertex="1">
