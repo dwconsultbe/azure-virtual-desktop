@@ -49,6 +49,7 @@ Each step is explained in the [administrator guide](docs/administrator-guide.md)
 | `samples/session-host-dcr/` | Optional data collection rule for the session hosts |
 | `tests/` | Collector output tests |
 | `docs/` | Administrator, helpdesk and technical documentation |
+| `CHANGELOG.md` | What changed in each version |
 
 ## Credits
 
