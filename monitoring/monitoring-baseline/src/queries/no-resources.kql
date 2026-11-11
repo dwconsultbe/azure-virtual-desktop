@@ -2,7 +2,11 @@ let UnavailableErrors = WVDErrors
 | where TimeGenerated > ago(15m) and _ResourceId =~ '__HOST_POOL_ID__'
 | where CodeSymbolic == 'ConnectionFailedNoHealthyRdshAvailable'
 | distinct CorrelationId;
+// One row per host pool, so a full pool sends one alert instead of one per user.
 WVDConnections
 | where TimeGenerated > ago(15m) and _ResourceId =~ '__HOST_POOL_ID__'
 | join kind=inner UnavailableErrors on CorrelationId
-| project UserName, SessionHostName
+| summarize FailedConnections = dcount(CorrelationId), Users = dcount(UserName), ExampleUsers = make_set(UserName, 10), LastFailure = max(TimeGenerated)
+| where FailedConnections > 0
+| extend HostPoolName = tostring(split('__HOST_POOL_ID__', '/')[-1])
+| project HostPoolName, FailedConnections, Users, ExampleUsers, LastFailure

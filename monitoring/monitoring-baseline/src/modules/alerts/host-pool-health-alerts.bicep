@@ -137,11 +137,11 @@ resource noResourcesAvailable 'Microsoft.Insights/scheduledQueryRules@2023-12-01
   properties: queryRuleProperties(ruleContext, {
     alertId: 'noResourcesAvailable'
     displayName: 'AVD no resources available (${hostPoolName})'
-    description: 'A connection failed because no healthy session host was available. Check host health, drain mode and autoscale.'
+    description: 'Connections failed because no healthy session host was available. One alert per host pool; the query results show the number of failed connections and affected users, with example user names. Check host health, drain mode and autoscale.'
     severity: 1
     evaluationFrequency: 'PT15M'
     windowSize: 'PT15M'
     query: fillQuery(loadTextContent('../../queries/no-resources.kql'), queryValues)
-    dimensions: ['UserName']
+    dimensions: ['HostPoolName']
   })
 }

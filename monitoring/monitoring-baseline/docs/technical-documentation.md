@@ -111,7 +111,7 @@ Frequency = how often the rule runs. Window = how much data it looks at.
 | `capacity85` | Host pool load 85% to 95% (Pooled only) | 2 | 5 min / 30 min | Collector |
 | `capacity95` | Host pool load 95% or more (Pooled only) | 1 | 5 min / 30 min | Collector |
 | `connectionFailure` | 5+ failed connections from 3+ users with the same error in 15 min | 3 | 15 min / 15 min | `WVDConnections`, `WVDErrors` |
-| `noResourcesAvailable` | A connection failed because no session host was available | 1 | 15 min / 15 min | `WVDConnections`, `WVDErrors` |
+| `noResourcesAvailable` | Connections failed because no session host was available (one alert per host pool) | 1 | 15 min / 15 min | `WVDConnections`, `WVDErrors` |
 
 Load = sessions ÷ (max sessions per host × available hosts). With autoscale, the capacity alerts can fire during a normal scale-out.
 

@@ -63,7 +63,7 @@ If these alerts fire, other alerts may stay silent without anyone noticing. Trea
 
 | Alert | Sev | What it means | First step |
 |---|---|---|---|
-| no-resources | 1 | A user could not connect because no healthy desktop machine was available. | Users cannot work. Check the host alerts below and escalate. |
+| no-resources | 1 | Users could not connect because no healthy desktop machine was available. One e-mail per host pool; the alert shows how many users were refused, with some names. | Users cannot work. Check the host alerts below and escalate. |
 | connection-failure | 3 | Several users failed to connect, with the same error. | Ask the affected users what they see, note the error code in the alert and escalate if it continues. |
 | capacity-50 | 3 | The environment is 50% to 85% full. | Nothing to do now. Keep an eye on it. |
 | capacity-85 | 2 | The environment is 85% to 95% full. | Check that extra machines are starting. Escalate if the number of users keeps growing. |
