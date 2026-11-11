@@ -27,7 +27,9 @@ $scheduleParameters = @{
     }
 }
 
-$scheduleFile = Join-Path $env:AGENT_TEMPDIRECTORY 'avd-collector-schedules.parameters.json'
+# AGENT_TEMPDIRECTORY exists only in Azure DevOps; use the system temp folder elsewhere.
+$tempDirectory = if ($env:AGENT_TEMPDIRECTORY) { $env:AGENT_TEMPDIRECTORY } else { [System.IO.Path]::GetTempPath() }
+$scheduleFile = Join-Path $tempDirectory 'avd-collector-schedules.parameters.json'
 $scheduleParameters | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $scheduleFile
 
 az deployment group create `

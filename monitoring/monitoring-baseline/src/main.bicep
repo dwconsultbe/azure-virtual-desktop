@@ -1,4 +1,7 @@
 targetScope = 'subscription'
+
+import { AlertRuleId, AlertSet, alertSetDefinitions } from 'alert-sets.bicep'
+
 type WorkspaceReference = {
   subscriptionId: string?
   resourceGroupName: string
@@ -43,7 +46,10 @@ type HostPoolConfig = {
 type AdditionalResources = {
   fileStorageAccounts: AzureResourceReference[]?
   anfVolumes: AnfVolumeReference[]?
-  enabledAlertRuleIds: string[]?
+  @description('Alert sets to enable, for example [\'core\']. See src/alert-sets.bicep.')
+  alertSets: AlertSet[]?
+  @description('Individual alert IDs to enable, on top of the alert sets.')
+  enabledAlertRuleIds: AlertRuleId[]?
 }
 
 @description('Deployment region, alert email, existing Log Analytics workspace, monitoring resource group name and optional resource prefix.')
@@ -71,7 +77,8 @@ var actionGroupEmailReceivers = [
     useCommonAlertSchema: true
   }
 ]
-var enabledAlertRuleIds = additionalResources.?enabledAlertRuleIds ?? []
+var alertSetRuleIds = flatten(map(additionalResources.?alertSets ?? [], set => alertSetDefinitions[set]))
+var enabledAlertRuleIds = union(alertSetRuleIds, additionalResources.?enabledAlertRuleIds ?? [])
 var azModuleVersions = {
   'Az.Accounts': '5.5.3'
   'Az.DesktopVirtualization': '6.0.0'

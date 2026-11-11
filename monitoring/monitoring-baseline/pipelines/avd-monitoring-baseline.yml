@@ -90,7 +90,8 @@ stages:
                 if ($parseErrors) { throw "PowerShell syntax failed in ${path}: $($parseErrors[0].Message)" }
               }
               & (Join-Path (Get-Location) 'tests/collector-contract.ps1')
-            displayName: Check collector scripts and run contract test
+              & (Join-Path (Get-Location) 'tests/alert-ids.ps1')
+            displayName: Check collector scripts and run tests
             workingDirectory: $(projectDir)
 
   - stage: whatif

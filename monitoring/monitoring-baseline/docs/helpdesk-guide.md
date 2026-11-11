@@ -32,7 +32,7 @@ Good to know:
 - **You get one e-mail per problem, not a new one every few minutes.** An alert is *fired* once and stays open while the problem lasts.
 - **Each affected item gets its own alert.** Two hosts with a full disk give two e-mails. That is normal.
 - **An alert closes by itself** when the problem is gone, and sometimes a while after the last event. **"Resolved" does not always mean "fixed".** For example, the alert about a removed scaling plan closes by itself while the plan is still missing.
-- **Only alerts that the administrator switched on send e-mail.** After a new installation all alerts are off.
+- **Only alerts that the administrator switched on send e-mail.** After a new installation only the most important alerts (the "core" set) are on.
 
 ## What to do when an alert arrives
 

@@ -42,7 +42,9 @@ Deploying? Use the [administrator guide](administrator-guide.md). Handling alert
 
 | Choice | Why |
 | --- | --- |
-| All alerts are deployed **disabled** and enabled by ID | You switch alerts on only after their data arrives, so the mailbox stays trustworthy. |
+| Every rule is deployed; only the chosen **alert sets** and IDs are **enabled** | You switch alerts on only after their data arrives, so the mailbox stays trustworthy. |
+| Alert sets and IDs are **typed** in `src/alert-sets.bicep` | A typo fails the build instead of leaving an alert silently disabled. `tests/alert-ids.ps1` checks that the list matches the modules. |
+| The deployment starts a **first collector run** | Data arrives within minutes, and `collectorStale` does not fire on a new installation. |
 | Each KQL query is a **separate file** in `src/queries/` | Easy to read, test in Log Analytics and review. Bicep fills in placeholders such as `__HOST_POOL_ID__`. |
 | Collectors use the **managed identity** | No stored credentials. The identity only gets read roles. |
 | `hostPoolType` decides the **pool-specific rules** | Pooled pools get capacity alerts. Personal pools get the unhealthy assigned host alert. |
@@ -67,9 +69,27 @@ Deploying? Use the [administrator guide](administrator-guide.md). Handling alert
 > [!IMPORTANT]
 > Azure does not rename resources. A changed name creates a **new** resource and leaves the old one in place. This also applies when you change `hostPoolType`: delete the capacity or personal-unhealthy rules that no longer fit.
 
+## Alert sets
+
+Switch alerts on per set in `additionalResources.alertSets`, or per ID in `additionalResources.enabledAlertRuleIds`. Both can be combined. The sets are defined in `src/alert-sets.bicep`.
+
+| Set | Alert IDs |
+| --- | --- |
+| `core` | `collectorFailed`, `collectorStale`, `diagnosticDataMissing`, `noResourcesAvailable`, `healthCheckFailure`, `capacity95`, `personalUnhealthy`, `serviceHealthIncident` |
+| `hostPool` | `capacity50`, `capacity85`, `capacity95`, `connectionFailure`, `noResourcesAvailable` |
+| `sessionHosts` | `healthCheckFailure`, `personalUnhealthy`, `agentUpgrade`, `drainedIdle` |
+| `resources` | `cpu85`, `cpu95`, `memory2GB`, `memory1GB`, `localDiskFree10`, `localDiskFree5`, `osDiskBandwidth85`, `osDiskBandwidth95` |
+| `scaling` | `scalingPlanDisabled4h`, `scalingPlanDisabled24h`, `scalingPlanRemoved`, `autoscaleFailures` |
+| `fslogix` | `fslogixFree5`, `fslogixFree2`, `fslogixDiskInUse`, `fslogixAttach`, `fslogixNetwork`, `fslogixServiceDisabled`, `fslogixCompaction` |
+| `storage` | `fileShareCapacity15`, `fileShareCapacity5`, `filesAvailability`, `filesLatency50`, `filesLatency100`, `filesServerLatency50`, `filesServerLatency100`, `filesThrottling`, `anfVolumeFree15`, `anfVolumeFree5` |
+| `serviceHealth` | `serviceHealthIncident`, `serviceHealthMaintenance`, `serviceHealthAdvisory`, `serviceHealthSecurity` |
+| `all` | All of the above |
+
+`core` only uses data that the baseline sets up itself (AVD diagnostics and the collectors), so it works without a session-host DCR. A rule that does not apply is simply not created: for example `capacity95` on a Personal pool, or `storage` without storage accounts.
+
 ## Alert catalog
 
-Use the **ID** in `additionalResources.enabledAlertRuleIds`. The name of each alert rule contains the short name shown in the [helpdesk guide](helpdesk-guide.md).
+The name of each alert rule contains the short name shown in the [helpdesk guide](helpdesk-guide.md).
 
 Frequency = how often the rule runs. Window = how much data it looks at.
 
@@ -197,8 +217,10 @@ Source: [AMBA AVD Bicep template](https://github.com/Azure/azure-monitor-baselin
 | `src/queries/` | KQL for the log alerts |
 | `src/scripts/` | Collector runbooks |
 | `src/collector-schedules.bicep` | Automation schedules |
+| `src/alert-sets.bicep` | Alert IDs and alert sets |
 | `src/rules.bicep`, `src/naming.bicep` | Shared rule properties and names |
+| `deploy.ps1` | Deploy from your own machine |
 | `parameters/` | Example parameter file |
 | `pipelines/` | Pipeline, step template and deployment scripts |
 | `samples/session-host-dcr/` | Optional DCR for the session hosts |
-| `tests/` | Collector output tests |
+| `tests/` | Collector output and alert ID tests |

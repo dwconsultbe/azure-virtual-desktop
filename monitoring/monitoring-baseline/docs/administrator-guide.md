@@ -12,12 +12,12 @@ Handling alerts? Use the [helpdesk guide](helpdesk-guide.md). Looking for design
 | --- | --- |
 | [1. Check the prerequisites](#step-1-check-the-prerequisites) | Workspace, agent and data collection on the session hosts |
 | [2. Fill in the parameter file](#step-2-fill-in-the-parameter-file) | Region, e-mail, workspace and host pools |
-| [3. Set the permissions](#step-3-set-the-permissions) | Rights for the Azure DevOps service connection |
-| [4. Run the pipeline](#step-4-run-the-pipeline) | Build, preview and deploy |
-| [5. Check the data and enable alerts](#step-5-check-the-data-and-enable-alerts) | Confirm data arrives, then switch alerts on |
+| [3. Set the permissions](#step-3-set-the-permissions) | Rights for the account that deploys |
+| [4. Deploy](#step-4-deploy) | One script from your machine, or the Azure DevOps pipeline |
+| [5. Check the data and enable more alerts](#step-5-check-the-data-and-enable-more-alerts) | Confirm data arrives, then switch on more alert sets |
 
 > [!NOTE]
-> All alert rules are created **disabled**. Nothing sends e-mail until you enable alerts in step 5.
+> Only the alerts in the sets you choose are switched on. The example parameter file starts with the **core** set: the alerts that matter most and need no extra setup.
 
 ---
 
@@ -25,10 +25,12 @@ Handling alerts? Use the [helpdesk guide](helpdesk-guide.md). Looking for design
 
 - [ ] An existing **Log Analytics workspace**. Note its name and resource group.
 - [ ] **Azure Monitor Agent** on every session host.
-- [ ] A **data collection rule (DCR)** that sends performance counters and event logs from the session hosts to that workspace, and is associated with every session host.
+- [ ] A **data collection rule (DCR)** that sends performance counters and event logs from the session hosts to that workspace, and is associated with every session host. Needed for the `resources` and `fslogix` alert sets; the `core` set works without it.
 - [ ] The **name and resource group** of each host pool. The session hosts must be in the same resource group as their host pool.
 - [ ] An **e-mail address** (preferably a shared mailbox) for the notifications.
-- [ ] An **Azure DevOps project** with a service connection to the subscription.
+- [ ] To deploy, **one of**:
+  - [PowerShell 7](https://aka.ms/powershell) and the [Azure CLI](https://aka.ms/installazurecli) on your machine (easiest), or
+  - an **Azure DevOps project** with a service connection to the subscription.
 
 > [!TIP]
 > No DCR yet? The sample in [`samples/session-host-dcr`](../samples/session-host-dcr/README.md) creates one with exactly the data the alerts need, and can associate it with your session hosts.
@@ -51,7 +53,7 @@ Sending these to the `Perf` and `Event` tables is enough for the baseline. AVD I
 
 ## Step 2: Fill in the parameter file
 
-Open `parameters/main.example.bicepparam` and replace every `REPLACE_` value. The pipeline stops if one is left.
+Open `parameters/main.example.bicepparam` and replace every `REPLACE_` value. The deployment stops and lists the values that are left.
 
 ### Complete example
 
@@ -82,9 +84,8 @@ param hostPools = [
 ]
 
 param additionalResources = {
-  enabledAlertRuleIds: [
-    'collectorFailed'
-    'collectorStale'
+  alertSets: [
+    'core'
   ]
 }
 ```
@@ -120,13 +121,14 @@ param additionalResources = {
 > [!WARNING]
 > **Error "Data sink is already used"?** The host pool already has a diagnostic setting that sends to this workspace. Set `configureDiagnostics: false` for that pool. Make sure the existing setting includes `Management`, `Connection`, `Error`, `Checkpoint`, `HostRegistration` and `AgentHealthStatus`, plus `AutoscaleEvaluationPooled` when the pool uses a scaling plan.
 
-### `additionalResources`: optional extras
+### `additionalResources`: alerts and optional storage
 
-Leave this block empty for the first deployment, or enable only the two collector alerts as in the example.
+Keep `alertSets: ['core']` for the first deployment. You add more sets in step 5.
 
 | Setting | What it does |
 | --- | --- |
-| `enabledAlertRuleIds` | Alert IDs to switch on. See the [alert catalog](technical-documentation.md#alert-catalog). |
+| `alertSets` | Groups of alerts to switch on. See the [alert sets](#alert-sets) table in step 5. |
+| `enabledAlertRuleIds` | Individual alerts on top of the sets, for example `'cpu95'`. See the [alert catalog](technical-documentation.md#alert-catalog). |
 | `fileStorageAccounts` | Azure Files storage accounts with FSLogix profiles: `resourceGroupName`, `name`, optional `subscriptionId`. |
 | `anfVolumes` | Azure NetApp Files volumes: `resourceGroupName`, `netAppAccountName`, `capacityPoolName`, `name`, optional `subscriptionId`. |
 
@@ -134,18 +136,43 @@ Leave this block empty for the first deployment, or enable only the two collecto
 
 ## Step 3: Set the permissions
 
+The account that deploys is **you** (option A in step 4) or the **Azure DevOps service connection** (option B).
+
 | Who | Role | Scope | Why |
 | --- | --- | --- | --- |
-| Azure DevOps service connection | **Contributor** | Deployment subscription | Create the resource group, alerts and Automation Account |
-| Azure DevOps service connection | **User Access Administrator** (or Owner) | Each host-pool and storage resource group | Give the collectors read access |
+| The account that deploys | **Contributor** | Deployment subscription | Create the resource group, alerts and Automation Account |
+| The account that deploys | **User Access Administrator** (or Owner) | Each host-pool and storage resource group | Give the collectors read access |
 | Automation Account identity | Desktop Virtualization Reader | Each host-pool resource group | *Assigned automatically by the deployment* |
 | Automation Account identity | Reader | Each Azure Files resource group | *Assigned automatically by the deployment* |
 
-Host pools or storage in another subscription? Give the service connection the same rights there.
+Host pools or storage in another subscription? The account that deploys needs the same rights there.
 
 ---
 
-## Step 4: Run the pipeline
+## Step 4: Deploy
+
+Choose one option. Both do the same: a preview of the changes, then the deployment.
+
+### Option A: from your machine (easiest)
+
+1. Open PowerShell 7 in the `monitoring-baseline` folder.
+2. Sign in and deploy:
+
+   ```powershell
+   az login
+   ./deploy.ps1
+   ```
+
+3. Check the summary and the preview, then type `yes`.
+4. Wait until the script shows **Next steps** (about 5 to 10 minutes).
+
+| Option | Use when |
+| --- | --- |
+| `-SubscriptionId <id>` | You have several subscriptions. Default: the current Azure CLI subscription. |
+| `-ParameterFile <path>` | Your values are in another file. Default: `parameters/main.example.bicepparam`. |
+| `-Yes` | You do not want to confirm after the preview. |
+
+### Option B: Azure DevOps pipeline
 
 1. In Azure DevOps, go to **Pipelines > New pipeline** and select `pipelines/avd-monitoring-baseline.yml`.
 2. Select **Run pipeline** and fill in:
@@ -164,9 +191,9 @@ Host pools or storage in another subscription? Give the service connection the s
 
 ---
 
-## Step 5: Check the data and enable alerts
+## Step 5: Check the data and enable more alerts
 
-1. Wait about 30 minutes after the deployment.
+1. Wait about 15 minutes after the deployment. The deployment starts a first collector run itself.
 2. In the Log Analytics workspace, run this query. Every source should show a recent `LastSeen`. A missing source or an empty `LastSeen` means that data is not arriving:
 
    ```kusto
@@ -178,17 +205,34 @@ Host pools or storage in another subscription? Give the service connection the s
    | project Source, LastSeen
    ```
 
-3. Enable alerts **in small groups** by adding their IDs to `enabledAlertRuleIds` and running the pipeline again:
+3. Add more sets to `alertSets` and deploy again. Add one or two sets at a time:
 
-   | Round | Enable | Why first |
-   | --- | --- | --- |
-   | 1 | `collectorFailed`, `collectorStale`, `diagnosticDataMissing` | Tells you when the monitoring itself stops working |
-   | 2 | `noResourcesAvailable`, `healthCheckFailure`, `capacity95`, `personalUnhealthy` | Users cannot work |
-   | 3 | FSLogix, memory, disk and CPU alerts | Problems that affect users soon |
-   | 4 | Everything else you need | After a week, when you know the normal behaviour |
+   ```bicep
+   alertSets: [
+     'core'
+     'fslogix'
+     'resources'
+   ]
+   ```
 
-> [!NOTE]
-> An alert ID that does not exist is ignored without an error. Copy IDs from the [alert catalog](technical-documentation.md#alert-catalog).
+### Alert sets
+
+| Set | What it covers | Needs |
+| --- | --- | --- |
+| `core` | The monitoring itself, users who cannot connect, failed health checks, a full host pool, Microsoft incidents | Nothing extra. **Start here.** |
+| `hostPool` | Capacity at 50, 85 and 95%, connection failures | Nothing extra |
+| `sessionHosts` | Health checks, unhealthy personal hosts, agent upgrades, drained idle hosts | Nothing extra |
+| `scaling` | Scaling plan disabled or removed, autoscale failures | A scaling plan |
+| `resources` | CPU, memory, local disk, OS disk bandwidth | Session-host DCR |
+| `fslogix` | Profile space, attach, network, disk in use, service, compaction | Session-host DCR |
+| `storage` | Azure Files and Azure NetApp Files capacity, latency, availability, throttling | `fileStorageAccounts` or `anfVolumes` |
+| `serviceHealth` | All Microsoft notices: incidents, maintenance, advisories, security | Nothing extra |
+| `all` | Everything above | All of the above |
+
+The exact alerts per set are in the [alert catalog](technical-documentation.md#alert-catalog). Want a single alert without its set? Add its ID to `enabledAlertRuleIds`.
+
+> [!TIP]
+> A typo in a set name or alert ID stops the deployment with an error that lists the valid values. Nothing is half deployed.
 
 ---
 
@@ -196,11 +240,12 @@ Host pools or storage in another subscription? Give the service connection the s
 
 | When you... | Do this |
 | --- | --- |
-| Add a host pool | Add an entry to `hostPools` and run the pipeline. |
+| Enable more alerts | Add a set to `alertSets` and deploy again. |
+| Add a host pool | Add an entry to `hostPools` and deploy again. |
 | Add a session host | Associate the DCR with the new VM (or use Azure Policy). The alerts pick it up automatically. |
-| Change a pool from Pooled to Personal (or back) | Change `hostPoolType`, run the pipeline, then delete the alerts that no longer fit (capacity or personal-unhealthy). |
-| Add Azure Files storage | Add it to `fileStorageAccounts` and run the pipeline. |
-| Change a threshold | Change it in the module under `src/modules/alerts/` and run the pipeline. |
+| Change a pool from Pooled to Personal (or back) | Change `hostPoolType`, deploy again, then delete the alerts that no longer fit (capacity or personal-unhealthy). |
+| Add Azure Files storage | Add it to `fileStorageAccounts` and deploy again. |
+| Change a threshold | Change it in the module under `src/modules/alerts/` and deploy again. |
 | Remove the baseline | Delete the monitoring resource group, the `avd-baseline-...` diagnostic setting on each host pool, and the collector role assignments on the host-pool and storage resource groups. |
 
 ---
@@ -209,11 +254,13 @@ Host pools or storage in another subscription? Give the service connection the s
 
 | Symptom | Cause | Fix |
 | --- | --- | --- |
-| `Parameter file still contains REPLACE_ placeholders` | A value in the parameter file was not filled in | Replace every `REPLACE_` value |
+| `The parameter file still has ... value(s) to fill in` or `... REPLACE_ placeholders` | A value in the parameter file was not filled in | Replace the listed `REPLACE_` values |
+| `You are not signed in to Azure` | No Azure CLI session | Run `az login` |
+| `BCP034: The enclosing array expected an item of type ...` | A typo in `alertSets` or `enabledAlertRuleIds` | Use one of the values listed in the error |
 | `Data sink ... is already used` | The host pool already sends diagnostics to the workspace | Set `configureDiagnostics: false` for that pool |
-| `AuthorizationFailed` on `roleAssignments/write` | The service connection cannot assign roles | Give it User Access Administrator on the host-pool resource groups (step 3) |
-| `Automation module ... did not reach version` | The PowerShell module import in Automation took too long or failed | Check **Modules** in the Automation Account and run the pipeline again |
-| `collectorStale` fires right after deployment | The collectors have not run yet | Wait for the first runs (within 15 minutes); the alert closes by itself |
+| `AuthorizationFailed` on `roleAssignments/write` | The account that deploys cannot assign roles | Give it User Access Administrator on the host-pool resource groups (step 3) |
+| `Automation module ... did not reach version` | The PowerShell module import in Automation took too long or failed | Check **Modules** in the Automation Account and deploy again |
+| `collectorStale` fires right after deployment | The first collector run did not finish yet | Check **Jobs** in the Automation Account; the alert closes by itself after a successful run |
 | No `Perf` or `Event` data | The DCR is missing or not associated with the VM | Check the DCR association and the Azure Monitor Agent on the session host |
 
 ---

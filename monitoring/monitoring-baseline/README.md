@@ -15,21 +15,27 @@ Proactive alert rules for Azure Virtual Desktop, deployed with Bicep and an Azur
 
 | Resource | Purpose |
 | --- | --- |
-| Alert rules (disabled until you enable them) | Log, metric and Service Health alerts per host pool |
+| Alert rules (only the alert sets you choose are switched on) | Log, metric and Service Health alerts per host pool |
 | Automation Account with two collectors | Gather capacity, scaling plan and file share data that Azure Monitor does not provide |
 | Action Group | Sends the alerts by e-mail |
 | Host-pool diagnostic settings (optional per pool) | Send AVD diagnostics to your workspace |
 
 > [!IMPORTANT]
-> The deployment uses an **existing** Log Analytics workspace. Azure Monitor Agent and a data collection rule on the session hosts must already be in place. The [sample DCR](samples/session-host-dcr/README.md) can set that up.
+> The deployment uses an **existing** Log Analytics workspace. The CPU, memory, disk and FSLogix alerts also need Azure Monitor Agent and a data collection rule on the session hosts; the [sample DCR](samples/session-host-dcr/README.md) can set that up. The **core** alerts work without it.
 
 ## Quick start
 
-1. Check the prerequisites.
-2. Fill in `parameters/main.example.bicepparam`.
-3. Give the Azure DevOps service connection the required rights.
-4. Run `pipelines/avd-monitoring-baseline.yml`.
-5. Check the data and enable alerts step by step.
+1. Fill in the `REPLACE_` values in `parameters/main.example.bicepparam`.
+2. Deploy from PowerShell 7 in this folder:
+
+   ```powershell
+   az login
+   ./deploy.ps1
+   ```
+
+3. After about 15 minutes, check the data and add more alert sets.
+
+Prefer Azure DevOps? Use `pipelines/avd-monitoring-baseline.yml`.
 
 Each step is explained in the [administrator guide](docs/administrator-guide.md).
 

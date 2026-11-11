@@ -33,10 +33,22 @@ param hostPools = [
   }
 ]
 
-// 3. Optional extras. Leave empty for the standard deployment.
-// Add resources using their names and resource groups; subscriptionId is needed only
-// when a resource is in another subscription. Alert IDs are listed in docs/technical-documentation.md.
+// 3. Alerts and optional storage.
+// alertSets switches on groups of alerts. Start with 'core': it needs no extra setup.
+// Add more sets once the session-host data arrives:
+//   'hostPool', 'sessionHosts', 'resources', 'scaling', 'fslogix', 'storage', 'serviceHealth' or 'all'.
+// See docs/technical-documentation.md for the alerts in each set.
 param additionalResources = {
+  alertSets: [
+    'core'
+  ]
+  // Individual alerts on top of the sets, for example:
+  // enabledAlertRuleIds: [
+  //   'cpu95'
+  // ]
+
+  // Azure Files and Azure NetApp Files with FSLogix profiles. subscriptionId is needed
+  // only when the resource is in another subscription.
   // fileStorageAccounts: [
   //   {
   //     resourceGroupName: 'rg-storage'
@@ -50,9 +62,5 @@ param additionalResources = {
   //     capacityPoolName: 'pool-profiles'
   //     name: 'avd-profiles'
   //   }
-  // ]
-  // enabledAlertRuleIds: [
-  //   'collectorFailed'
-  //   'collectorStale'
   // ]
 }
