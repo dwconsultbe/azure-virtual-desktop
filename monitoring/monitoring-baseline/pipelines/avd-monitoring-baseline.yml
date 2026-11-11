@@ -10,20 +10,18 @@ pr: none
 #
 # One-time setup:
 #   1. Replace REPLACE_SERVICE_CONNECTION below with the exact name of your Azure service connection.
-#      The "Run pipeline" panel then shows it prefilled; you can still change it per run.
+#      It does not appear in the "Run pipeline" panel.
+#      Several environments with different service connections? Use one copy of this file per environment.
 #   2. Optional: Pipelines > Environments > 'avd-monitoring-baseline' > Approvals and checks > Approvals.
 
 parameters:
-  - name: serviceConnection
-    displayName: Azure service connection (exact name)
-    type: string
-    default: REPLACE_SERVICE_CONNECTION   # <-- set your service connection name here, once
   - name: parameterFile
     displayName: Parameter file, relative to the monitoring-baseline folder
     type: string
     default: parameters/main.example.bicepparam
 
 variables:
+  serviceConnection: REPLACE_SERVICE_CONNECTION   # <-- set your service connection name here, once
   templateFile: src/main.bicep
   environmentName: avd-monitoring-baseline
 
@@ -111,7 +109,7 @@ stages:
           - task: AzureCLI@2
             displayName: Run subscription what-if
             inputs:
-              azureSubscription: ${{ parameters.serviceConnection }}
+              azureSubscription: ${{ variables.serviceConnection }}
               scriptType: pscore
               scriptLocation: inlineScript
               workingDirectory: $(projectDir)
@@ -157,7 +155,7 @@ stages:
                 - task: AzureCLI@2
                   displayName: Deploy subscription template
                   inputs:
-                    azureSubscription: ${{ parameters.serviceConnection }}
+                    azureSubscription: ${{ variables.serviceConnection }}
                     scriptType: pscore
                     scriptLocation: inlineScript
                     workingDirectory: $(projectDir)
