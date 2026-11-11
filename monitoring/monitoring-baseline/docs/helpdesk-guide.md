@@ -1,6 +1,8 @@
-# Azure Virtual Desktop monitoring: helpdesk guide
+# Helpdesk guide
 
-This guide is for the helpdesk. It explains what the monitoring does, how to read an alert e-mail, and what to do first for every alert. You do not need to know how the solution is built.
+**For:** the helpdesk that receives the alert e-mails.
+
+**Result:** you know what an alert means, whether users are affected, and what to do first. You do not need to know how the solution is built.
 
 If you deploy or configure the solution, use the [administrator guide](administrator-guide.md). For the full background, see the [technical documentation](technical-documentation.md).
 
@@ -44,7 +46,8 @@ Escalation contact: **(fill in: name, phone number and mailbox of the administra
 
 ## What each alert means
 
-The alert display name in the e-mail is the name shown in the tables below. In the Azure portal, pool-specific alert resource names include the host pool name. The shared collector alerts are not tied to one host pool.
+> [!TIP]
+> **How to find an alert in these tables:** the alert name in the e-mail contains the short code from the first column. For example, `avd-ar-hp-prod-capacity-85-x7k2` is **capacity-85** for host pool **hp-prod**. The collector alerts are shared and have no host pool in their name.
 
 ### The monitoring itself
 
@@ -154,5 +157,5 @@ No. Thresholds and alerts are managed by the administrator. Report alerts that g
 ## More information
 
 - [Administrator guide](administrator-guide.md): installation, settings, pipeline and the source notice for adapted material.
-- [Technical documentation](technical-documentation.md): every alert explained in detail, with timing and background.
+- [Technical documentation](technical-documentation.md): the full alert catalog, with how often each alert checks and which data it uses.
 - The alert ideas and parts of the queries were adapted from Microsoft's AMBA AVD baseline. The source notice is in the administrator guide.

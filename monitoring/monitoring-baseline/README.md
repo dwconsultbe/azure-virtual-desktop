@@ -1,47 +1,54 @@
-# Proactive Azure Virtual Desktop monitoring with alert rules
+# Azure Virtual Desktop monitoring baseline
 
-This repository contains Bicep templates and an Azure DevOps pipeline for monitoring Azure Virtual Desktop host pools, session hosts, FSLogix and storage. It is an independent project.
+Proactive alert rules for Azure Virtual Desktop, deployed with Bicep and an Azure DevOps pipeline. Covers host pools, session hosts, FSLogix, scaling plans, Azure Files, Azure NetApp Files and Service Health.
 
-## 🏅 Credits
+## Which document do I need?
 
-This project's alert set is based on Microsoft's [Azure Monitor Baseline Alerts for Azure Virtual Desktop](https://azure.github.io/azure-monitor-baseline-alerts/patterns/specialized/avd/deploy/Avd-Deploy/index.html). Parts of the KQL queries and the collector data format were also adapted from AMBA. I also reviewed [Durrante's AVDMonitoringBaseline](https://github.com/durrante/AVDMonitoringBaseline) during development. The Bicep templates, pipeline, query files and deployment steps were developed for this project.
-
-Microsoft does not provide or support this project. See the [administrator guide](docs/administrator-guide.md) for the original MIT license notice.
-
-Here, a **collector** is a PowerShell runbook in Azure Automation that gathers extra monitoring data.
+| I want to... | Read |
+| --- | --- |
+| Deploy or maintain the baseline | [Administrator guide](docs/administrator-guide.md) |
+| Understand and handle an alert | [Helpdesk guide](docs/helpdesk-guide.md) |
+| See the design and the full alert list | [Technical documentation](docs/technical-documentation.md) |
+| Set up data collection on the session hosts | [Sample DCR](samples/session-host-dcr/README.md) |
 
 ## What it deploys
 
-- Azure Monitor alert rules for host pools, session hosts, FSLogix, Azure Files, Azure NetApp Files and Service Health.
-- An Azure Automation Account with two PowerShell collectors.
-- Alerts that check the collectors, with runs spread out over time.
-- A monitoring resource group and host-pool diagnostic settings (can be skipped per pool when they already exist). The Log Analytics workspace, Azure Monitor Agent and guest-data DCR must already be set up.
-- KQL queries stored as separate files.
-- A pipeline that builds the Bicep templates, runs tests and shows a what-if preview before deployment. Deployment waits for approval only when an approval check is set on the Azure DevOps environment.
+| Resource | Purpose |
+| --- | --- |
+| Alert rules (disabled until you enable them) | Log, metric and Service Health alerts per host pool |
+| Automation Account with two collectors | Gather capacity, scaling plan and file share data that Azure Monitor does not provide |
+| Action Group | Sends the alerts by e-mail |
+| Host-pool diagnostic settings (optional per pool) | Send AVD diagnostics to your workspace |
 
-## Before you deploy
+> [!IMPORTANT]
+> The deployment uses an **existing** Log Analytics workspace. Azure Monitor Agent and a data collection rule on the session hosts must already be in place. The [sample DCR](samples/session-host-dcr/README.md) can set that up.
 
-Read the [administrator guide](docs/administrator-guide.md) first. It explains the values you need to change and the permissions needed by the Azure DevOps service connection and the Automation Account identity.
+## Quick start
 
-The example parameter file has three input blocks: `deployment`, `hostPools` and optional `additionalResources`. Set the region, notification email, existing Log Analytics workspace, monitoring resource group name and host-pool details. Before deployment, make sure Azure Monitor Agent is installed and a DCR (see `samples/session-host-dcr`) sends the required performance counters and Windows events to that workspace. Associate the DCR with every session-host VM, including new VMs. The deployment does not create a workspace or DCR. Alert rules are disabled until selected by ID. The pipeline runs a what-if before deployment; configure an environment approval check if you want it to pause for review.
+1. Check the prerequisites.
+2. Fill in `parameters/main.example.bicepparam`.
+3. Give the Azure DevOps service connection the required rights.
+4. Run `pipelines/avd-monitoring-baseline.yml`.
+5. Check the data and enable alerts step by step.
+
+Each step is explained in the [administrator guide](docs/administrator-guide.md).
 
 ## Repository layout
 
-- `src/`: Bicep modules, KQL queries and PowerShell collectors.
-- `parameters/`: example deployment parameters.
-- `pipelines/`: Azure DevOps pipeline definition, step template and deployment scripts.
-- `samples/session-host-dcr/`: optional data collection rule for the session hosts.
-- `tests/`: tests that check the data returned by the collectors.
-- `docs/`: administrator, helpdesk and technical documentation.
+| Path | Contents |
+| --- | --- |
+| `src/` | Bicep modules, KQL queries and collector scripts |
+| `parameters/` | Example parameter file |
+| `pipelines/` | Azure DevOps pipeline and deployment scripts |
+| `samples/session-host-dcr/` | Optional data collection rule for the session hosts |
+| `tests/` | Collector output tests |
+| `docs/` | Administrator, helpdesk and technical documentation |
 
-## Validation status
+## Credits
 
-The collector tests pass locally. A successful Bicep build or what-if preview does not prove that every alert works with live Azure data. Test the diagnostics, permissions, collectors and alert rules in a test subscription before using this in production.
+The alert set is based on Microsoft's [Azure Monitor Baseline Alerts (AMBA) for Azure Virtual Desktop](https://azure.github.io/azure-monitor-baseline-alerts/patterns/specialized/avd/deploy/Avd-Deploy/index.html). Parts of the KQL and the collector data format are adapted from AMBA. [Durrante's AVDMonitoringBaseline](https://github.com/durrante/AVDMonitoringBaseline) was also reviewed during development. The MIT notice for adapted material is in the [administrator guide](docs/administrator-guide.md#sources-and-license-notice).
 
 ## Disclaimer
 
-This open-source project is an example of monitoring an Azure Virtual Desktop environment. It is not an official Microsoft solution, and it has not been tested with every Azure setup.
-
-Before deployment, review the templates, queries, permissions, alert thresholds and Azure costs. Test the solution outside production first.
-
-This project is provided under the MIT License, without warranty or official support.
+> [!WARNING]
+> This is an open-source example, not an official Microsoft solution. It is provided under the MIT License, without warranty or support. A successful build or what-if does not prove that every alert works with your data. Review the templates, thresholds, permissions and costs, and test outside production first.
