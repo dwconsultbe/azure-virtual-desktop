@@ -77,8 +77,8 @@ if ($storageIds.Count -gt 0) {
 }
 foreach ($run in $firstRuns) {
     $bodyFile = Join-Path ([System.IO.Path]::GetTempPath()) "avd-collector-job-$([guid]::NewGuid().Guid).json"
-    @{ properties = @{ runbook = @{ name = $run.Runbook }; parameters = $run.Parameters } } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $bodyFile
-    az rest --method put --url "$jobsUrl/$([guid]::NewGuid().Guid)?api-version=2023-11-01" --body "@$bodyFile" --output none
+    @{ properties = @{ runbook = @{ name = $run.Runbook }; parameters = $run.Parameters } } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $bodyFile -Encoding utf8NoBOM
+    az rest --method put --url "$jobsUrl/$([guid]::NewGuid().Guid)?api-version=2023-11-01" --headers 'Content-Type=application/json' --body "@$bodyFile" --output none
     if ($LASTEXITCODE -ne 0) { Write-Warning "Could not start $($run.Runbook). The first scheduled run starts within 15 minutes." }
     Remove-Item -LiteralPath $bodyFile -ErrorAction SilentlyContinue
 }

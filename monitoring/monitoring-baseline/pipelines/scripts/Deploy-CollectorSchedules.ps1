@@ -65,19 +65,19 @@ function Sync-JobSchedule {
         [Parameter(Mandatory)] [hashtable] $Parameters
     )
 
-    $matches = @($existing | Where-Object {
+    $existingLinks = @($existing | Where-Object {
         $_.properties.runbook.name -eq $RunbookName -and $_.properties.schedule.name -eq $ScheduleName
     })
-    $current = $matches | Select-Object -First 1
+    $current = $existingLinks | Select-Object -First 1
     $same = $null -ne $current
     if ($same) {
         foreach ($key in $Parameters.Keys) {
             if ([string]$current.properties.parameters.$key -ne [string]$Parameters[$key]) { $same = $false }
         }
     }
-    if ($same -and $matches.Count -eq 1) { return }
+    if ($same -and $existingLinks.Count -eq 1) { return }
 
-    foreach ($match in $matches) {
+    foreach ($match in $existingLinks) {
         Remove-JobScheduleLink -JobSchedule $match
     }
 
@@ -90,9 +90,14 @@ function Sync-JobSchedule {
     }
     foreach ($key in $Parameters.Keys) { $body.properties.parameters[$key] = [string]$Parameters[$key] }
     $jobScheduleId = [guid]::NewGuid().Guid
-    $json = $body | ConvertTo-Json -Depth 10 -Compress
-    az rest --method put --url "$baseUrl/$jobScheduleId`?api-version=2023-11-01" --body $json --output none
-    if ($LASTEXITCODE -ne 0) { throw "Could not create job schedule for $RunbookName/$ScheduleName." }
+    # Pass the body as a file with an explicit content type. On Windows, az.cmd mangles the
+    # quotes of an inline JSON body, and Azure then rejects it (415 Unsupported Media Type).
+    $bodyFile = Join-Path $tempDirectory "avd-job-schedule-$jobScheduleId.json"
+    $body | ConvertTo-Json -Depth 10 -Compress | Set-Content -LiteralPath $bodyFile -Encoding utf8NoBOM
+    az rest --method put --url "$baseUrl/$jobScheduleId`?api-version=2023-11-01" --headers 'Content-Type=application/json' --body "@$bodyFile" --output none
+    $putExitCode = $LASTEXITCODE
+    Remove-Item -LiteralPath $bodyFile -ErrorAction SilentlyContinue
+    if ($putExitCode -ne 0) { throw "Could not create job schedule for $RunbookName/$ScheduleName." }
 }
 
 $offsets = @(15, 30, 45, 60)
