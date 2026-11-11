@@ -9,11 +9,9 @@ param hostPoolType string
 param logAnalyticsWorkspaceResourceId string
 param actionGroupResourceId string
 param alertNamePrefix string
-param customerName string
 param enabledAlertRuleIds string[]
 
 var hostPoolName = last(split(hostPoolResourceId, '/'))
-var descriptionPrefix = empty(customerName) ? '' : 'Customer: ${customerName}. '
 var ruleContext RuleContext = {
   workspaceResourceId: logAnalyticsWorkspaceResourceId
   actionGroupResourceId: actionGroupResourceId
@@ -45,7 +43,7 @@ resource capacityAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [f
   properties: queryRuleProperties(ruleContext, {
     alertId: band.id
     displayName: 'AVD host pool capacity at least ${band.lower}% (${hostPoolName})'
-    description: '${descriptionPrefix}Latest collector run reports host pool load at or above ${band.lower}%. The alert value is the load percentage. Check session capacity, unavailable hosts and autoscale.'
+    description: 'Latest collector run reports host pool load at or above ${band.lower}%. The alert value is the load percentage. Check session capacity, unavailable hosts and autoscale.'
     severity: band.severity
     evaluationFrequency: 'PT5M'
     windowSize: 'PT30M'
@@ -71,7 +69,7 @@ resource scalingDisabledAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-0
   properties: queryRuleProperties(ruleContext, {
     alertId: alert.id
     displayName: 'AVD scaling plan disabled over ${alert.hours} hours (${hostPoolName})'
-    description: '${descriptionPrefix}Autoscale has been disabled on this host pool for over ${alert.hours} hours. Review the scaling plan assignment and re-enable autoscale when maintenance ends.'
+    description: 'Autoscale has been disabled on this host pool for over ${alert.hours} hours. Review the scaling plan assignment and re-enable autoscale when maintenance ends.'
     severity: alert.severity
     evaluationFrequency: alert.frequency
     windowSize: alert.window
@@ -88,7 +86,7 @@ var otherAlerts = [
     alertId: 'scalingPlanRemoved'
     shortName: 'scaling-removed'
     displayName: 'AVD scaling plan removed (${hostPoolName})'
-    description: '${descriptionPrefix}A scaling plan was removed from this host pool and has not been restored for four hours. The alert fires once per removal. Review the scaling plan Activity Log and assignment.'
+    description: 'A scaling plan was removed from this host pool and has not been restored for four hours. The alert fires once per removal. Review the scaling plan Activity Log and assignment.'
     severity: 3
     evaluationFrequency: 'PT1H'
     windowSize: 'PT6H'
@@ -99,7 +97,7 @@ var otherAlerts = [
     alertId: 'diagnosticDataMissing'
     shortName: 'diagnostic-data-missing'
     displayName: 'AVD diagnostic data not received (${hostPoolName})'
-    description: '${descriptionPrefix}The collector reports active sessions in every recent run, but no agent health diagnostics reached the workspace for one hour. Check the host pool diagnostic settings and workspace destination.'
+    description: 'The collector reports active sessions in every recent run, but no agent health diagnostics reached the workspace for one hour. Check the host pool diagnostic settings and workspace destination.'
     severity: 2
     evaluationFrequency: 'PT15M'
     windowSize: 'PT1H'
@@ -125,7 +123,7 @@ resource personalUnhealthy 'Microsoft.Insights/scheduledQueryRules@2023-12-01' =
   properties: queryRuleProperties(ruleContext, {
     alertId: 'personalUnhealthy'
     displayName: 'AVD assigned personal host unhealthy (${hostPoolName})'
-    description: '${descriptionPrefix}An assigned personal session host has been unhealthy in at least two consecutive collector runs. Hosts with status Shutdown (stopped or deallocated) are not counted. Check the assigned user and the host status.'
+    description: 'An assigned personal session host has been unhealthy in at least two consecutive collector runs. Hosts with status Shutdown (stopped or deallocated) are not counted. Check the assigned user and the host status.'
     severity: 1
     evaluationFrequency: 'PT5M'
     windowSize: 'PT45M'

@@ -3,7 +3,6 @@ targetScope = 'resourceGroup'
 param storageAccountResourceId string
 param actionGroupResourceId string
 param alertNamePrefix string
-param customerName string
 param enabledAlertRuleIds string[]
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
@@ -16,7 +15,6 @@ resource fileService 'Microsoft.Storage/storageAccounts/fileServices@2023-05-01'
   name: 'default'
 }
 
-var descriptionPrefix = empty(customerName) ? '' : 'Customer: ${customerName}. '
 var fileMetrics = [
   { id: 'filesServerLatency50', metric: 'SuccessServerLatency', threshold: 50, severity: 2, operator: 'GreaterThan', window: 'PT15M' }
   { id: 'filesServerLatency100', metric: 'SuccessServerLatency', threshold: 100, severity: 1, operator: 'GreaterThan', window: 'PT15M' }
@@ -29,7 +27,7 @@ resource fileAlerts 'Microsoft.Insights/metricAlerts@2018-03-01' = [for item in 
   name: '${alertNamePrefix}-${storageAccount.name}-${item.id}-${uniqueString(storageAccountResourceId)}'
   location: 'global'
   properties: {
-    description: '${descriptionPrefix}Azure Files ${item.metric} crossed ${item.threshold} on storage account ${storageAccount.name}. Check share and storage performance.'
+    description: 'Azure Files ${item.metric} crossed ${item.threshold} on storage account ${storageAccount.name}. Check share and storage performance.'
     enabled: contains(enabledAlertRuleIds, item.id)
     severity: item.severity
     evaluationFrequency: 'PT5M'
@@ -58,7 +56,7 @@ resource shareThrottling 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: '${alertNamePrefix}-${storageAccount.name}-files-throttling-${uniqueString(storageAccountResourceId)}'
   location: 'global'
   properties: {
-    description: '${descriptionPrefix}Azure Files transactions were throttled for a monitored file service on ${storageAccount.name}. Review IOPS and throughput limits.'
+    description: 'Azure Files transactions were throttled for a monitored file service on ${storageAccount.name}. Review IOPS and throughput limits.'
     enabled: contains(enabledAlertRuleIds, 'filesThrottling')
     severity: 2
     evaluationFrequency: 'PT5M'

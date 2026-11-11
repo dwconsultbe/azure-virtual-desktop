@@ -23,13 +23,14 @@ Here, a **collector** is a PowerShell runbook in Azure Automation that gathers e
 
 Read the [administrator guide](docs/administrator-guide.md) first. It explains the values you need to change and the permissions needed by the Azure DevOps service connection and the Automation Account identity.
 
-The example parameter file has three input blocks: `deployment`, `hostPools` and optional `additionalResources`. Set the region, notification email, existing Log Analytics workspace, monitoring resource group name and host-pool details. Before deployment, make sure Azure Monitor Agent is installed and a DCR sends the required performance counters and Windows events to that workspace. Associate the DCR with every session-host VM, including new VMs. The deployment does not create a workspace or DCR. Alert rules are disabled until selected by ID. The pipeline runs a what-if before deployment; configure an environment approval check if you want it to pause for review.
+The example parameter file has three input blocks: `deployment`, `hostPools` and optional `additionalResources`. Set the region, notification email, existing Log Analytics workspace, monitoring resource group name and host-pool details. Before deployment, make sure Azure Monitor Agent is installed and a DCR (see `samples/session-host-dcr`) sends the required performance counters and Windows events to that workspace. Associate the DCR with every session-host VM, including new VMs. The deployment does not create a workspace or DCR. Alert rules are disabled until selected by ID. The pipeline runs a what-if before deployment; configure an environment approval check if you want it to pause for review.
 
 ## Repository layout
 
 - `src/`: Bicep modules, KQL queries and PowerShell collectors.
 - `parameters/`: example deployment parameters.
-- `pipelines/`: Azure DevOps pipeline definition.
+- `pipelines/`: Azure DevOps pipeline definition, step template and deployment scripts.
+- `samples/session-host-dcr/`: optional data collection rule for the session hosts.
 - `tests/`: tests that check the data returned by the collectors.
 - `docs/`: administrator, helpdesk and technical documentation.
 

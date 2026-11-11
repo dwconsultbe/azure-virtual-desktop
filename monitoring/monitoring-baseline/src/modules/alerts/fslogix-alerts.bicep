@@ -7,11 +7,9 @@ param hostPoolResourceId string
 param logAnalyticsWorkspaceResourceId string
 param actionGroupResourceId string
 param alertNamePrefix string
-param customerName string
 param enabledAlertRuleIds string[]
 
 var hostPoolName = last(split(hostPoolResourceId, '/'))
-var descriptionPrefix = empty(customerName) ? '' : 'Customer: ${customerName}. '
 
 var queryValues = {
   __HOST_POOL_ID__: hostPoolResourceId
@@ -33,7 +31,7 @@ resource profileDiskInUse 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = 
   properties: queryRuleProperties(ruleContext, {
     alertId: 'fslogixDiskInUse'
     displayName: 'FSLogix profile disk in use on another VM (${hostPoolName})'
-    description: '${descriptionPrefix}FSLogix Event ID 51 indicates a profile disk is already in use. Investigate the user, profile path, and session host.'
+    description: 'FSLogix Event ID 51 indicates a profile disk is already in use. Investigate the user, profile path, and session host.'
     severity: 2
     evaluationFrequency: 'PT5M'
     windowSize: 'PT30M'
@@ -71,7 +69,7 @@ resource fslogixEventAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' 
   properties: queryRuleProperties(ruleContext, {
     alertId: alert.alertId
     displayName: 'FSLogix ${alert.title} (${hostPoolName})'
-    description: '${descriptionPrefix}FSLogix reports: ${alert.title}. ${alert.perUser ? 'Inspect the event description, user and session host.' : 'One alert per session host; the query result shows the number of affected users and an example event.'}'
+    description: 'FSLogix reports: ${alert.title}. ${alert.perUser ? 'Inspect the event description, user and session host.' : 'One alert per session host; the query result shows the number of affected users and an example event.'}'
     severity: alert.severity
     evaluationFrequency: 'PT5M'
     windowSize: alert.window

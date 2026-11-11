@@ -7,7 +7,6 @@ param hostPoolResourceId string
 param logAnalyticsWorkspaceResourceId string
 param actionGroupResourceId string
 param alertNamePrefix string
-param customerName string
 param enabledAlertRuleIds string[]
 
 @description('Failed connections with the same error within 15 minutes before connectionFailure fires.')
@@ -22,7 +21,6 @@ param connectionFailureMinUsers int = 3
 param ignoredConnectionErrorCodes string[] = []
 
 var hostPoolName = last(split(hostPoolResourceId, '/'))
-var descriptionPrefix = empty(customerName) ? '' : 'Customer: ${customerName}. '
 
 var queryValues = {
   __HOST_POOL_ID__: hostPoolResourceId
@@ -56,7 +54,7 @@ resource localDiskAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [
   properties: queryRuleProperties(ruleContext, {
     alertId: alert.id
     displayName: 'AVD local disk below ${alert.threshold}% free (${hostPoolName})'
-    description: '${descriptionPrefix}A session host local disk has ${alert.threshold}% or less free space. The alert value is free disk percentage. Check disk use and available capacity.'
+    description: 'A session host local disk has ${alert.threshold}% or less free space. The alert value is free disk percentage. Check disk use and available capacity.'
     severity: alert.severity
     evaluationFrequency: 'PT15M'
     windowSize: 'PT15M'
@@ -76,7 +74,7 @@ resource cpuAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [for al
   properties: queryRuleProperties(ruleContext, {
     alertId: alert.id
     displayName: 'AVD session host CPU above ${alert.threshold}% (${hostPoolName})'
-    description: '${descriptionPrefix}A session host has average CPU usage at or above ${alert.threshold}%. The alert value is the average CPU percentage.'
+    description: 'A session host has average CPU usage at or above ${alert.threshold}%. The alert value is the average CPU percentage.'
     severity: alert.severity
     evaluationFrequency: alert.evaluationFrequency
     windowSize: alert.windowSize
@@ -96,7 +94,7 @@ resource healthCheckFailure 'Microsoft.Insights/scheduledQueryRules@2023-12-01' 
   properties: queryRuleProperties(ruleContext, {
     alertId: 'healthCheckFailure'
     displayName: 'AVD session host health check failed (${hostPoolName})'
-    description: '${descriptionPrefix}A session host health check failed. The health check name and host are in the alert dimensions, including checks 11 and 19.'
+    description: 'A session host health check failed. The health check name and host are in the alert dimensions, including checks 11 and 19.'
     severity: 1
     evaluationFrequency: 'PT15M'
     windowSize: 'PT15M'
@@ -123,7 +121,7 @@ resource connectionFailure 'Microsoft.Insights/scheduledQueryRules@2023-12-01' =
   properties: queryRuleProperties(ruleContext, {
     alertId: 'connectionFailure'
     displayName: 'AVD user connection failed (${hostPoolName})'
-    description: '${descriptionPrefix}At least ${connectionFailureMinFailures} connections from ${connectionFailureMinUsers} or more users failed with the same error in the last 15 minutes. The query results show the error code and the affected session hosts.'
+    description: 'At least ${connectionFailureMinFailures} connections from ${connectionFailureMinUsers} or more users failed with the same error in the last 15 minutes. The query results show the error code and the affected session hosts.'
     severity: 3
     evaluationFrequency: 'PT15M'
     windowSize: 'PT15M'
@@ -139,7 +137,7 @@ resource noResourcesAvailable 'Microsoft.Insights/scheduledQueryRules@2023-12-01
   properties: queryRuleProperties(ruleContext, {
     alertId: 'noResourcesAvailable'
     displayName: 'AVD no resources available (${hostPoolName})'
-    description: '${descriptionPrefix}A connection failed because no healthy session host was available. Check host health, drain mode and autoscale.'
+    description: 'A connection failed because no healthy session host was available. Check host health, drain mode and autoscale.'
     severity: 1
     evaluationFrequency: 'PT15M'
     windowSize: 'PT15M'

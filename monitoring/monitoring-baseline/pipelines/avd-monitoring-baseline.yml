@@ -8,14 +8,21 @@ pr: none
 #   whatif : subscription what-if; the output is published as pipeline artifact 'what-if'.
 #   deploy : runs after what-if. It pauses only when an approval check is configured on the environment.
 #
-# One-time setup in Azure DevOps: Pipelines > Environments > 'avd-monitoring-baseline' > Approvals and checks > Approvals.
+# Fill in the two parameters below in the "Run pipeline" panel. You do not need to edit this file.
+# Optional one-time setup: Pipelines > Environments > 'avd-monitoring-baseline' > Approvals and checks > Approvals.
+
+parameters:
+  - name: serviceConnection
+    displayName: Azure service connection (exact name)
+    type: string
+  - name: parameterFile
+    displayName: Parameter file, relative to the monitoring-baseline folder
+    type: string
+    default: parameters/main.example.bicepparam
 
 variables:
   templateFile: src/main.bicep
   environmentName: avd-monitoring-baseline
-  parameterFile: parameters/main.example.bicepparam
-  # Override this pipeline variable with the exact Azure DevOps service connection name.
-  serviceConnection: ''
 
 pool:
   vmImage: ubuntu-24.04
@@ -29,28 +36,13 @@ stages:
           - checkout: self
             fetchDepth: 1
 
-          - pwsh: |
-              $ErrorActionPreference = 'Stop'
-              $projectMatches = @(Get-ChildItem -LiteralPath $env:BUILD_SOURCESDIRECTORY -Filter 'Deploy-MonitoringBaseline.ps1' -File -Recurse |
-                Where-Object {
-                  $_.Directory.Name -eq 'scripts' -and
-                  $_.Directory.Parent.Name -eq 'pipelines' -and
-                  (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'src/main.bicep')) -and
-                  (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'parameters/main.example.bicepparam'))
-                })
-              if ($projectMatches.Count -ne 1) {
-                throw "Expected one monitoring-baseline project in the repository, found $($projectMatches.Count)."
-              }
-              $projectDir = $projectMatches[0].Directory.Parent.Parent.FullName
-              Write-Host "##vso[task.setvariable variable=projectDir]$projectDir"
-              Write-Host "Found monitoring baseline at: $projectDir"
-            displayName: Find project folder
+          - template: templates/find-project.yml
 
           - pwsh: |
               $ErrorActionPreference = 'Stop'
               $file = $env:PARAMETER_FILE
               if ([string]::IsNullOrWhiteSpace($file)) {
-                throw 'Configure the parameterFile pipeline variable before running this pipeline.'
+                throw 'Set the parameterFile parameter when you run this pipeline.'
               }
               $cwd = (Get-Location).Path
               if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
@@ -68,16 +60,16 @@ stages:
             displayName: Validate deployment parameter file
             workingDirectory: $(projectDir)
             env:
-              PARAMETER_FILE: '$(parameterFile)'
+              PARAMETER_FILE: ${{ parameters.parameterFile }}
 
           - pwsh: |
               $ErrorActionPreference = 'Stop'
               az bicep install --only-show-errors
               if ($LASTEXITCODE -ne 0) { throw 'Bicep installation failed.' }
-              az bicep build --file '$(templateFile)' --stdout | Out-Null
-              if ($LASTEXITCODE -ne 0) { throw 'Bicep build failed.' }
-              az bicep build --file src/collector-schedules.bicep --stdout | Out-Null
-              if ($LASTEXITCODE -ne 0) { throw 'Collector schedule Bicep build failed.' }
+              foreach ($template in @('$(templateFile)', 'src/collector-schedules.bicep', 'samples/session-host-dcr/main.bicep')) {
+                az bicep build --file $template --stdout | Out-Null
+                if ($LASTEXITCODE -ne 0) { throw "Bicep build failed: $template" }
+              }
 
               $built = & ./pipelines/scripts/Get-BuiltParameters.ps1 -ParameterFile $env:PARAMETER_FILE
               # Inspect compiled parameter values, not source comments.
@@ -87,7 +79,7 @@ stages:
             displayName: Build Bicep and check parameters
             workingDirectory: $(projectDir)
             env:
-              PARAMETER_FILE: '$(parameterFile)'
+              PARAMETER_FILE: ${{ parameters.parameterFile }}
 
           - pwsh: |
               $ErrorActionPreference = 'Stop'
@@ -110,27 +102,12 @@ stages:
           - checkout: self
             fetchDepth: 1
 
-          - pwsh: |
-              $ErrorActionPreference = 'Stop'
-              $projectMatches = @(Get-ChildItem -LiteralPath $env:BUILD_SOURCESDIRECTORY -Filter 'Deploy-MonitoringBaseline.ps1' -File -Recurse |
-                Where-Object {
-                  $_.Directory.Name -eq 'scripts' -and
-                  $_.Directory.Parent.Name -eq 'pipelines' -and
-                  (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'src/main.bicep')) -and
-                  (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'parameters/main.example.bicepparam'))
-                })
-              if ($projectMatches.Count -ne 1) {
-                throw "Expected one monitoring-baseline project in the repository, found $($projectMatches.Count)."
-              }
-              $projectDir = $projectMatches[0].Directory.Parent.Parent.FullName
-              Write-Host "##vso[task.setvariable variable=projectDir]$projectDir"
-              Write-Host "Found monitoring baseline at: $projectDir"
-            displayName: Find project folder
+          - template: templates/find-project.yml
 
           - task: AzureCLI@2
             displayName: Run subscription what-if
             inputs:
-              azureSubscription: $(serviceConnection)
+              azureSubscription: ${{ parameters.serviceConnection }}
               scriptType: pscore
               scriptLocation: inlineScript
               workingDirectory: $(projectDir)
@@ -149,7 +126,7 @@ stages:
                   2>&1 | Tee-Object -FilePath $outFile
                 if ($LASTEXITCODE -ne 0) { throw 'Azure what-if failed.' }
             env:
-              PARAMETER_FILE: '$(parameterFile)'
+              PARAMETER_FILE: ${{ parameters.parameterFile }}
 
           - publish: $(Build.ArtifactStagingDirectory)/what-if.txt
             artifact: what-if
@@ -171,27 +148,12 @@ stages:
                 - checkout: self
                   fetchDepth: 1
 
-                - pwsh: |
-                    $ErrorActionPreference = 'Stop'
-                    $projectMatches = @(Get-ChildItem -LiteralPath $env:BUILD_SOURCESDIRECTORY -Filter 'Deploy-MonitoringBaseline.ps1' -File -Recurse |
-                      Where-Object {
-                        $_.Directory.Name -eq 'scripts' -and
-                        $_.Directory.Parent.Name -eq 'pipelines' -and
-                        (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'src/main.bicep')) -and
-                        (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'parameters/main.example.bicepparam'))
-                      })
-                    if ($projectMatches.Count -ne 1) {
-                      throw "Expected one monitoring-baseline project in the repository, found $($projectMatches.Count)."
-                    }
-                    $projectDir = $projectMatches[0].Directory.Parent.Parent.FullName
-                    Write-Host "##vso[task.setvariable variable=projectDir]$projectDir"
-                    Write-Host "Found monitoring baseline at: $projectDir"
-                  displayName: Find project folder
+                - template: templates/find-project.yml
 
                 - task: AzureCLI@2
                   displayName: Deploy subscription template
                   inputs:
-                    azureSubscription: $(serviceConnection)
+                    azureSubscription: ${{ parameters.serviceConnection }}
                     scriptType: pscore
                     scriptLocation: inlineScript
                     workingDirectory: $(projectDir)
@@ -201,4 +163,4 @@ stages:
                       -DeploymentName avd-monitoring-$(Build.BuildId) `
                       -ScheduleDeploymentName avd-collector-schedules-$(Build.BuildId)
                   env:
-                    PARAMETER_FILE: '$(parameterFile)'
+                    PARAMETER_FILE: ${{ parameters.parameterFile }}

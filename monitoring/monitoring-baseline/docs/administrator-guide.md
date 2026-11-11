@@ -21,7 +21,7 @@ Before deployment, you need:
 - an email address for alert notifications;
 - an Azure DevOps service connection with the permissions below.
 
-The DCR must send Windows performance counters to the `Perf` table and Windows event logs to the `Event` table in the workspace. Collect the counters used by the alerts, including processor, memory, disk, process and Terminal Services counters. Collect `System`, `Application` warnings and errors, `Microsoft-Windows-TerminalServices-RemoteConnectionManager/Admin`, `Microsoft-Windows-TerminalServices-LocalSessionManager/Operational`, and `Microsoft-FSLogix-Apps` Admin and Operational events. Configure this before deploying the baseline, and check that the data is arriving. The baseline configures host-pool diagnostic settings to send AVD diagnostics to the same workspace.
+The DCR must send Windows performance counters to the `Perf` table and Windows event logs to the `Event` table in the workspace. Collect the counters used by the alerts, including processor, memory, disk, process and Terminal Services counters. Collect `System`, `Application` warnings and errors, `Microsoft-Windows-TerminalServices-RemoteConnectionManager/Admin`, `Microsoft-Windows-TerminalServices-LocalSessionManager/Operational`, and `Microsoft-FSLogix-Apps` Admin and Operational events. Configure this before deploying the baseline, and check that the data is arriving. The optional sample in [`samples/session-host-dcr`](../samples/session-host-dcr/README.md) creates a DCR with exactly this data and can associate it with your session hosts. The baseline configures host-pool diagnostic settings to send AVD diagnostics to the same workspace.
 
 ## Set the three parameter blocks
 
@@ -77,9 +77,13 @@ The runbooks only read Azure configuration and usage data. They do not need stor
 ## Create and run the pipeline
 
 1. Create an Azure DevOps pipeline from `pipelines/avd-monitoring-baseline.yml`.
-2. Add the pipeline variables `parameterFile` and `serviceConnection`. Set `parameterFile` to `parameters/main.example.bicepparam` (relative to the project folder), and set `serviceConnection` to the exact service connection name. Do not allow users to override these variables when they run the pipeline. The pipeline finds the project folder automatically, so the repository folder structure does not need to be configured.
-3. Authorize the pipeline to use the service connection.
-4. Run the pipeline. Review the what-if output; the deployment stage runs after the what-if stage. It waits for approval only if an approval check is configured on the `avd-monitoring-baseline` environment.
+2. Select **Run pipeline**. The run panel asks for two parameters; you do not need to edit the YAML file:
+   - **Azure service connection**: the exact name of the service connection.
+   - **Parameter file**: defaults to `parameters/main.example.bicepparam`, relative to the project folder. Change it if you keep your values in another file.
+
+   The pipeline finds the project folder automatically, so the repository folder structure does not need to be configured.
+3. On the first run, Azure DevOps asks you to permit the pipeline to use the service connection and the `avd-monitoring-baseline` environment.
+4. Review the what-if output; the deployment stage runs after the what-if stage. It waits for approval only if an approval check is configured on the `avd-monitoring-baseline` environment.
 
 After the Bicep deployment, the pipeline waits for the PowerShell modules, publishes the runbooks and creates or updates their schedules.
 

@@ -72,13 +72,11 @@ var actionGroupEmailReceivers = [
   }
 ]
 var enabledAlertRuleIds = additionalResources.?enabledAlertRuleIds ?? []
-var customerName = ''
 var azModuleVersions = {
   'Az.Accounts': '5.5.3'
   'Az.DesktopVirtualization': '6.0.0'
   'Az.Storage': '9.7.2'
 }
-var jobDiagnosticsSettingName = '${collectorNamePrefix}-monitoring-jobs-to-law'
 var connectionFailureMinFailures = 5
 var connectionFailureMinUsers = 3
 var ignoredConnectionErrorCodes = [
@@ -156,7 +154,6 @@ module collectorInfrastructure 'modules/collectors/collector-infrastructure.bice
     location: location
     automationAccountName: automationAccountName
     namePrefix: collectorNamePrefix
-    jobDiagnosticsSettingName: jobDiagnosticsSettingName
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     azModuleVersions: azModuleVersions
   }
@@ -171,7 +168,6 @@ module collectorHealthAlerts 'modules/alerts/collector-health-alerts.bicep' = {
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     actionGroupResourceId: effectiveActionGroupResourceId
     alertNamePrefix: alertNamePrefix
-    customerName: customerName
     enabledAlertRuleIds: enabledAlertRuleIds
     hostPoolRunbookName: collectorInfrastructure.outputs.hostPoolRunbookName
     storageRunbookName: collectorInfrastructure.outputs.storageRunbookName
@@ -207,7 +203,6 @@ module hostPoolAlerts 'modules/alerts/host-pool-alerts.bicep' = [for (pool, inde
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     actionGroupResourceId: effectiveActionGroupResourceId
     alertNamePrefix: alertNamePrefix
-    customerName: customerName
     enabledAlertRuleIds: enabledAlertRuleIds
     includeAutoscaleFailures: (pool.?hostPoolType ?? 'Pooled') == 'Pooled' && !empty(pool.?scalingPlanName ?? '')
   }
@@ -224,7 +219,6 @@ module hostPoolCollectorAlerts 'modules/alerts/host-pool-collector-alerts.bicep'
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     actionGroupResourceId: effectiveActionGroupResourceId
     alertNamePrefix: alertNamePrefix
-    customerName: customerName
     enabledAlertRuleIds: enabledAlertRuleIds
   }
 }]
@@ -239,7 +233,6 @@ module hostPoolHealthAlerts 'modules/alerts/host-pool-health-alerts.bicep' = [fo
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     actionGroupResourceId: effectiveActionGroupResourceId
     alertNamePrefix: alertNamePrefix
-    customerName: customerName
     enabledAlertRuleIds: enabledAlertRuleIds
     connectionFailureMinFailures: connectionFailureMinFailures
     connectionFailureMinUsers: connectionFailureMinUsers
@@ -257,7 +250,6 @@ module sessionHostMetricAlerts 'modules/alerts/session-host-metric-alerts.bicep'
     sessionHostVmResourceGroupId: '/subscriptions/${pool.?subscriptionId ?? subscription().subscriptionId}/resourceGroups/${pool.resourceGroupName}'
     actionGroupResourceId: effectiveActionGroupResourceId
     alertNamePrefix: alertNamePrefix
-    customerName: customerName
     enabledAlertRuleIds: enabledAlertRuleIds
   }
 }]
@@ -272,7 +264,6 @@ module fslogixAlerts 'modules/alerts/fslogix-alerts.bicep' = [for (hostPoolId, i
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     actionGroupResourceId: effectiveActionGroupResourceId
     alertNamePrefix: alertNamePrefix
-    customerName: customerName
     enabledAlertRuleIds: enabledAlertRuleIds
   }
 }]
@@ -285,7 +276,6 @@ module fileMetricAlerts 'modules/alerts/file-metric-alerts.bicep' = [for (storag
     storageAccountResourceId: storageId
     actionGroupResourceId: effectiveActionGroupResourceId
     alertNamePrefix: alertNamePrefix
-    customerName: customerName
     enabledAlertRuleIds: enabledAlertRuleIds
   }
 }]
@@ -300,7 +290,6 @@ module storageShareAlerts 'modules/alerts/storage-share-alerts.bicep' = [for (st
     logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
     actionGroupResourceId: effectiveActionGroupResourceId
     alertNamePrefix: alertNamePrefix
-    customerName: customerName
     enabledAlertRuleIds: enabledAlertRuleIds
   }
 }]
@@ -313,7 +302,6 @@ module anfVolumeAlerts 'modules/alerts/anf-volume-alerts.bicep' = [for (volumeId
     volumeResourceId: volumeId
     actionGroupResourceId: effectiveActionGroupResourceId
     alertNamePrefix: alertNamePrefix
-    customerName: customerName
     enabledAlertRuleIds: enabledAlertRuleIds
   }
 }]
@@ -337,6 +325,7 @@ output collectorNamePrefix string = collectorNamePrefix
 output alertNamePrefix string = alertNamePrefix
 output hostPoolRunbookName string = collectorInfrastructure.outputs.hostPoolRunbookName
 output storageRunbookName string = collectorInfrastructure.outputs.storageRunbookName
+output azModuleVersions object = azModuleVersions
 output actionGroupResourceId string = effectiveActionGroupResourceId
 output logAnalyticsWorkspaceResourceId string = logAnalyticsWorkspaceResourceId
 output hostPoolResourceIds array = hostPoolResourceIds

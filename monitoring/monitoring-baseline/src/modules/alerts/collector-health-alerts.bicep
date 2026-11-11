@@ -6,7 +6,6 @@ param location string
 param logAnalyticsWorkspaceResourceId string
 param actionGroupResourceId string
 param alertNamePrefix string
-param customerName string
 param enabledAlertRuleIds string[]
 
 @description('Name of the host pool collector runbook.')
@@ -18,7 +17,6 @@ param storageRunbookName string
 @description('True when storage collector schedules are deployed. Otherwise that runbook never runs and must not be reported as stale.')
 param includeStorageCollector bool
 
-var descriptionPrefix = empty(customerName) ? '' : 'Customer: ${customerName}. '
 var runbookNames = includeStorageCollector ? [hostPoolRunbookName, storageRunbookName] : [hostPoolRunbookName]
 var runbookList = join(map(runbookNames, name => '\'${name}\''), ', ')
 
@@ -39,7 +37,7 @@ var collectorAlerts = [
     alertId: 'collectorFailed'
     shortName: 'collector-failed'
     displayName: 'AVD collector runbook job failed'
-    description: '${descriptionPrefix}A collector runbook job failed or was suspended. Alerts that depend on collector output stop updating until the next successful run. Check the job Errors and Warnings in the Automation Account.'
+    description: 'A collector runbook job failed or was suspended. Alerts that depend on collector output stop updating until the next successful run. Check the job Errors and Warnings in the Automation Account.'
     severity: 2
     evaluationFrequency: 'PT15M'
     windowSize: 'PT30M'
@@ -50,7 +48,7 @@ var collectorAlerts = [
     alertId: 'collectorStale'
     shortName: 'collector-stale'
     displayName: 'AVD collector output missing for 45 minutes'
-    description: '${descriptionPrefix}A collector runbook has written no output for 45 minutes. Alerts that depend on collector output are not evaluating real data. Check the schedules, the job history and the Automation Account diagnostic settings.'
+    description: 'A collector runbook has written no output for 45 minutes. Alerts that depend on collector output are not evaluating real data. Check the schedules, the job history and the Automation Account diagnostic settings.'
     severity: 2
     evaluationFrequency: 'PT15M'
     windowSize: 'PT2H'

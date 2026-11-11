@@ -8,11 +8,9 @@ param storageAccountResourceId string
 param logAnalyticsWorkspaceResourceId string
 param actionGroupResourceId string
 param alertNamePrefix string
-param customerName string
 param enabledAlertRuleIds string[]
 
 var storageAccountName = last(split(storageAccountResourceId, '/'))
-var descriptionPrefix = empty(customerName) ? '' : 'Customer: ${customerName}. '
 
 var ruleContext RuleContext = {
   workspaceResourceId: logAnalyticsWorkspaceResourceId
@@ -38,7 +36,7 @@ resource shareCapacityAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01'
   properties: queryRuleProperties(ruleContext, {
     alertId: alert.id
     displayName: 'Azure Files share at or below ${alert.threshold}% free (${storageAccountName})'
-    description: '${descriptionPrefix}A monitored Azure Files share has ${alert.threshold}% or less of its quota remaining. The alert value is the free percentage. Increase quota or free space.'
+    description: 'A monitored Azure Files share has ${alert.threshold}% or less of its quota remaining. The alert value is the free percentage. Increase quota or free space.'
     severity: alert.severity
     evaluationFrequency: 'PT10M'
     windowSize: 'PT1H'

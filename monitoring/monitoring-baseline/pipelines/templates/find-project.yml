@@ -1,0 +1,18 @@
+# Finds the monitoring-baseline folder in the repository and sets the projectDir variable,
+# so the pipeline works wherever the folder lives in the repository.
+steps:
+  - pwsh: |
+      $ErrorActionPreference = 'Stop'
+      $projectMatches = @(Get-ChildItem -LiteralPath $env:BUILD_SOURCESDIRECTORY -Filter 'Deploy-MonitoringBaseline.ps1' -File -Recurse |
+        Where-Object {
+          $_.Directory.Name -eq 'scripts' -and
+          $_.Directory.Parent.Name -eq 'pipelines' -and
+          (Test-Path (Join-Path $_.Directory.Parent.Parent.FullName 'src/main.bicep'))
+        })
+      if ($projectMatches.Count -ne 1) {
+        throw "Expected one monitoring-baseline project in the repository, found $($projectMatches.Count)."
+      }
+      $projectDir = $projectMatches[0].Directory.Parent.Parent.FullName
+      Write-Host "##vso[task.setvariable variable=projectDir]$projectDir"
+      Write-Host "Found monitoring baseline at: $projectDir"
+    displayName: Find project folder

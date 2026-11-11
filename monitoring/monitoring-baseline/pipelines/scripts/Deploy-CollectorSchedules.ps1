@@ -4,6 +4,8 @@ param(
     [Parameter(Mandatory)] [string] $ResourceGroup,
     [Parameter(Mandatory)] [string] $AccountName,
     [Parameter(Mandatory)] [string] $NamePrefix,
+    [Parameter(Mandatory)] [string] $HostPoolRunbookName,
+    [Parameter(Mandatory)] [string] $StorageRunbookName,
     [string[]] $HostPoolResourceIds = @(),
     [string[]] $ScalingPlanResourceIds = @(),
     [string[]] $FileStorageAccountResourceIds = @(),
@@ -94,7 +96,7 @@ function Sync-JobSchedule {
 $offsets = @(15, 30, 45, 60)
 for ($index = 0; $index -lt $offsets.Count; $index++) {
     Sync-JobSchedule `
-        -RunbookName 'avd-host-pool-collector' `
+        -RunbookName $HostPoolRunbookName `
         -ScheduleName "$NamePrefix-host-pool-$index" `
         -Parameters @{
             HostPoolResourceIds = ($HostPoolResourceIds -join ',')
@@ -106,7 +108,7 @@ for ($index = 0; $index -lt $offsets.Count; $index++) {
 if ($FileStorageAccountResourceIds.Count -gt 0) {
     for ($index = 0; $index -lt $offsets.Count; $index++) {
         Sync-JobSchedule `
-            -RunbookName 'avd-storage-collector' `
+            -RunbookName $StorageRunbookName `
             -ScheduleName "$NamePrefix-azure-files-$index" `
             -Parameters @{
                 StorageAccountResourceIds = ($FileStorageAccountResourceIds -join ',')
@@ -114,15 +116,14 @@ if ($FileStorageAccountResourceIds.Count -gt 0) {
             }
     }
 } else {
-    $storageRunbookName = 'avd-storage-collector'
     $storageScheduleNames = @($offsets | ForEach-Object -Begin { $index = 0 } -Process { "$NamePrefix-azure-files-$index"; $index++ })
     $storageLinks = @($existing | Where-Object {
-        $_.properties.runbook.name -eq $storageRunbookName -and $_.properties.schedule.name -in $storageScheduleNames
+        $_.properties.runbook.name -eq $StorageRunbookName -and $_.properties.schedule.name -in $storageScheduleNames
     })
     foreach ($link in $storageLinks) { Remove-JobScheduleLink -JobSchedule $link }
 
     $otherLinks = @($existing | Where-Object {
-        $_.properties.runbook.name -ne $storageRunbookName -and $_.properties.schedule.name -in $storageScheduleNames
+        $_.properties.runbook.name -ne $StorageRunbookName -and $_.properties.schedule.name -in $storageScheduleNames
     })
     $scheduleList = az automation schedule list `
         --automation-account-name $AccountName `

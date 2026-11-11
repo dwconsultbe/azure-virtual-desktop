@@ -7,8 +7,6 @@ param automationAccountName string
 
 @description('Prefix that the runbook and diagnostic setting names are derived from.')
 param namePrefix string
-@description('Optional existing diagnostic setting name. Leave empty to derive it from namePrefix.')
-param jobDiagnosticsSettingName string = ''
 param logAnalyticsWorkspaceResourceId string
 
 @description('Pinned PowerShell Gallery versions of the Az modules the collector runbooks need, keyed by module name.')
@@ -49,7 +47,7 @@ resource azModules 'Microsoft.Automation/automationAccounts/modules@2023-11-01' 
 }]
 
 resource jobDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: empty(jobDiagnosticsSettingName) ? jobDiagnosticsName(namePrefix) : jobDiagnosticsSettingName
+  name: jobDiagnosticsName(namePrefix)
   scope: automationAccount
   properties: {
     workspaceId: logAnalyticsWorkspaceResourceId

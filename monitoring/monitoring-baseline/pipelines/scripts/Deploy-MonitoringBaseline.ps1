@@ -28,11 +28,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Azure Automation CLI extension installation fa
 & (Join-Path $PSScriptRoot 'Wait-AutomationModules.ps1') `
     -ResourceGroup $resourceGroup `
     -AccountName $account `
-    -ExpectedModules @{
-        'Az.Accounts' = '5.5.3'
-        'Az.DesktopVirtualization' = '6.0.0'
-        'Az.Storage' = '9.7.2'
-    }
+    -ExpectedModules $outputs.azModuleVersions.value
 
 $runbooks = [ordered]@{
     $outputs.hostPoolRunbookName.value = 'src/scripts/collect-host-pools.ps1'
@@ -48,6 +44,8 @@ $runbooks = [ordered]@{
     -ResourceGroup $resourceGroup `
     -AccountName $account `
     -NamePrefix $outputs.collectorNamePrefix.value `
+    -HostPoolRunbookName $outputs.hostPoolRunbookName.value `
+    -StorageRunbookName $outputs.storageRunbookName.value `
     -HostPoolResourceIds @($outputs.hostPoolResourceIds.value) `
     -ScalingPlanResourceIds @($outputs.scalingPlanResourceIds.value) `
     -FileStorageAccountResourceIds @($outputs.fileStorageAccountResourceIds.value)

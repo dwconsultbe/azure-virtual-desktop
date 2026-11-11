@@ -5,11 +5,9 @@ param hostPoolResourceId string
 param sessionHostVmResourceGroupId string
 param actionGroupResourceId string
 param alertNamePrefix string
-param customerName string
 param enabledAlertRuleIds string[]
 
 var hostPoolName = last(split(hostPoolResourceId, '/'))
-var descriptionPrefix = empty(customerName) ? '' : 'Customer: ${customerName}. '
 
 var diskThresholds = [
   { id: 'osDiskBandwidth85', threshold: 85, severity: 2 }
@@ -20,7 +18,7 @@ resource diskBandwidthAlerts 'Microsoft.Insights/metricAlerts@2018-03-01' = [for
   name: '${alertNamePrefix}-${hostPoolName}-${alert.id}-${uniqueString(hostPoolResourceId)}'
   location: 'global'
   properties: {
-    description: '${descriptionPrefix}The OS disk bandwidth of a session host in ${hostPoolName} reached ${alert.threshold}%.'
+    description: 'The OS disk bandwidth of a session host in ${hostPoolName} reached ${alert.threshold}%.'
     enabled: contains(enabledAlertRuleIds, alert.id)
     severity: alert.severity
     evaluationFrequency: 'PT5M'

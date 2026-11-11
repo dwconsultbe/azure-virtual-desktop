@@ -1,7 +1,6 @@
-// Names of the collector resources, derived from one prefix (the alertNamePrefix parameter).
-// The Bicep that creates a resource and the KQL that reads its output both use these functions,
-// so a name cannot differ between them. With the prefix avd-monitoring they give the names that the
-// first deployment already created, so nothing is renamed.
+// Names shared between the Bicep that creates the collector resources, the KQL that reads
+// their output and the schedules. Keep them in one place so they cannot drift apart.
+// Changing a name creates a new resource next to the old one in Azure.
 
 @export()
 func hostPoolCollectorName() string => 'avd-host-pool-collector'

@@ -3,7 +3,6 @@ targetScope = 'resourceGroup'
 param volumeResourceId string
 param actionGroupResourceId string
 param alertNamePrefix string
-param customerName string
 param enabledAlertRuleIds string[]
 
 resource volume 'Microsoft.NetApp/netAppAccounts/capacityPools/volumes@2024-07-01' existing = {
@@ -12,7 +11,6 @@ resource volume 'Microsoft.NetApp/netAppAccounts/capacityPools/volumes@2024-07-0
 }
 
 var volumeName = last(split(volumeResourceId, '/'))
-var descriptionPrefix = empty(customerName) ? '' : 'Customer: ${customerName}. '
 var thresholds = [
   { id: 'anfVolumeFree15', consumed: 85, severity: 2 }
   { id: 'anfVolumeFree5', consumed: 95, severity: 1 }
@@ -22,7 +20,7 @@ resource volumeAlerts 'Microsoft.Insights/metricAlerts@2018-03-01' = [for alert 
   name: '${alertNamePrefix}-${volumeName}-${alert.id}-${uniqueString(volumeResourceId)}'
   location: 'global'
   properties: {
-    description: '${descriptionPrefix}Azure NetApp Files volume ${volumeName} has reached ${alert.consumed}% consumed capacity. Expand the volume or free space.'
+    description: 'Azure NetApp Files volume ${volumeName} has reached ${alert.consumed}% consumed capacity. Expand the volume or free space.'
     enabled: contains(enabledAlertRuleIds, alert.id)
     severity: alert.severity
     evaluationFrequency: 'PT1H'

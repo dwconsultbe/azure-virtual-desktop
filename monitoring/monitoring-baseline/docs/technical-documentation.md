@@ -76,6 +76,8 @@ For the source implementation, see the [AMBA AVD Bicep template](https://github.
 - `pipelines/scripts/Deploy-CollectorSchedules.ps1`: creates or updates links between runbooks and schedules.
 - `pipelines/scripts/Deploy-MonitoringBaseline.ps1`: subscription deployment, Automation setup, runbook publishing and schedule deployment.
 - `parameters/`: deployment parameter examples.
+- `samples/session-host-dcr/`: optional session-host data collection rule with VM associations.
+- `pipelines/templates/find-project.yml`: pipeline step that locates the project folder.
 - `tests/`: tests that check the data returned by the collectors.
 
 ## Find and enable alert IDs

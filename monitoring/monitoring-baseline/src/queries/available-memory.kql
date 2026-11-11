@@ -1,7 +1,7 @@
 __HOST_POOL_VMS__
 Perf
 | where TimeGenerated > ago(15m)
-| where ObjectName == 'Memory' and CounterName == 'Available MBytes'
+| where ObjectName == 'Memory' and CounterName =~ 'Available MBytes'
 | extend VMResourceId = tolower(_ResourceId)
 | summarize AvailableMB = round(avg(CounterValue), 0), FirstSample = min(TimeGenerated) by VMResourceId
 | where FirstSample <= ago(10m)
