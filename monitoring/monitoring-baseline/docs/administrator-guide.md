@@ -177,16 +177,17 @@ Choose one option. Both do the same: a preview of the changes, then the deployme
 
 ### Option B: Azure DevOps pipeline
 
-1. Open `pipelines/avd-monitoring-baseline.yml` and replace `REPLACE_SERVICE_CONNECTION` with the exact name of your service connection. You do this once:
+1. Open `pipelines/avd-monitoring-baseline.yml` and set the two values at the top. You do this once:
 
    ```yaml
    variables:
-     serviceConnection: asc-avd-monitoring   # <-- your service connection name
+     serviceConnection: asc-avd-monitoring                # <-- exact name of your service connection
+     parameterFile: parameters/main.example.bicepparam    # <-- your parameter file
    ```
 
 2. Commit and push the change.
 3. In Azure DevOps, go to **Pipelines > New pipeline** and select `pipelines/avd-monitoring-baseline.yml`.
-4. Select **Run pipeline**. The only field is **Parameter file**. Leave the default (`parameters/main.example.bicepparam`), unless your values are in another file.
+4. Select **Run pipeline** and **Run**. There is nothing to fill in.
 5. On the first run, select **Permit** when Azure DevOps asks for access to the service connection and the `avd-monitoring-baseline` environment.
 6. Open the **what-if** artifact and review the planned changes.
 7. Wait for the **Deploy** stage to finish. It also imports the PowerShell modules, publishes the runbooks and creates the schedules.
@@ -194,7 +195,7 @@ Choose one option. Both do the same: a preview of the changes, then the deployme
 > [!NOTE]
 > The run fails right away with an error about `REPLACE_SERVICE_CONNECTION`? Step 1 was skipped. Set the name in the YAML, commit and run again.
 >
-> Several environments with different service connections, such as test and production? Use one copy of the YAML file per environment, each with its own service connection and parameter file.
+> Several environments, such as test and production? Use one copy of the YAML file per environment, each with its own service connection and parameter file. That way a production parameter file can never run with a test service connection.
 
 > [!TIP]
 > Want the pipeline to wait for your approval after the what-if? Add an approval in **Pipelines > Environments > avd-monitoring-baseline > Approvals and checks**.

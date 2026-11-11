@@ -9,19 +9,15 @@ pr: none
 #   deploy : runs after what-if. It pauses only when an approval check is configured on the environment.
 #
 # One-time setup:
-#   1. Replace REPLACE_SERVICE_CONNECTION below with the exact name of your Azure service connection.
-#      It does not appear in the "Run pipeline" panel.
-#      Several environments with different service connections? Use one copy of this file per environment.
+#   1. Set the two values under "variables" below: your Azure service connection and your
+#      parameter file. Running the pipeline then needs no input.
+#      Several environments, such as test and production? Use one copy of this file per
+#      environment, each with its own service connection and parameter file.
 #   2. Optional: Pipelines > Environments > 'avd-monitoring-baseline' > Approvals and checks > Approvals.
 
-parameters:
-  - name: parameterFile
-    displayName: Parameter file, relative to the monitoring-baseline folder
-    type: string
-    default: parameters/main.example.bicepparam
-
 variables:
-  serviceConnection: REPLACE_SERVICE_CONNECTION   # <-- set your service connection name here, once
+  serviceConnection: REPLACE_SERVICE_CONNECTION       # <-- exact name of your Azure service connection
+  parameterFile: parameters/main.example.bicepparam   # <-- relative to the monitoring-baseline folder
   templateFile: src/main.bicep
   environmentName: avd-monitoring-baseline
 
@@ -43,7 +39,7 @@ stages:
               $ErrorActionPreference = 'Stop'
               $file = $env:PARAMETER_FILE
               if ([string]::IsNullOrWhiteSpace($file)) {
-                throw 'Set the parameterFile parameter when you run this pipeline.'
+                throw 'Set the parameterFile variable at the top of this pipeline.'
               }
               $cwd = (Get-Location).Path
               if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
@@ -61,7 +57,7 @@ stages:
             displayName: Validate deployment parameter file
             workingDirectory: $(projectDir)
             env:
-              PARAMETER_FILE: ${{ parameters.parameterFile }}
+              PARAMETER_FILE: ${{ variables.parameterFile }}
 
           - pwsh: |
               $ErrorActionPreference = 'Stop'
@@ -80,7 +76,7 @@ stages:
             displayName: Build Bicep and check parameters
             workingDirectory: $(projectDir)
             env:
-              PARAMETER_FILE: ${{ parameters.parameterFile }}
+              PARAMETER_FILE: ${{ variables.parameterFile }}
 
           - pwsh: |
               $ErrorActionPreference = 'Stop'
@@ -128,7 +124,7 @@ stages:
                   2>&1 | Tee-Object -FilePath $outFile
                 if ($LASTEXITCODE -ne 0) { throw 'Azure what-if failed.' }
             env:
-              PARAMETER_FILE: ${{ parameters.parameterFile }}
+              PARAMETER_FILE: ${{ variables.parameterFile }}
 
           - publish: $(Build.ArtifactStagingDirectory)/what-if.txt
             artifact: what-if
@@ -165,4 +161,4 @@ stages:
                       -DeploymentName avd-monitoring-$(Build.BuildId) `
                       -ScheduleDeploymentName avd-collector-schedules-$(Build.BuildId)
                   env:
-                    PARAMETER_FILE: ${{ parameters.parameterFile }}
+                    PARAMETER_FILE: ${{ variables.parameterFile }}
