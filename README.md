@@ -1,6 +1,6 @@
 # Azure Virtual Desktop
 
-Automation, monitoring and infrastructure as code for Azure Virtual Desktop (AVD), shared by [DW Consult](https://dwconsult.tech).
+Automation, monitoring and infrastructure as code for Azure Virtual Desktop (AVD), shared by [DWCONSULT](https://dwconsult.tech).
 
 This repository is for AVD administrators and engineers. Each folder holds a project you can deploy on its own, with its own documentation.
 
@@ -10,7 +10,7 @@ This repository is for AVD administrators and engineers. Each folder holds a pro
 | --- | --- | --- |
 | [AVD monitoring baseline](monitoring/monitoring-baseline/) | Alert rules for host pools, session hosts, FSLogix, scaling plans, Azure Files, Azure NetApp Files and Service Health, deployed with Bicep. Based on Microsoft's Azure Monitor Baseline Alerts (AMBA). | [README](monitoring/monitoring-baseline/README.md) |
 
-More background is on the [DW Consult blog](https://dwconsult.tech/).
+More background is on the [DWCONSULT blog](https://dwconsult.tech/).
 
 ## Releases
 
