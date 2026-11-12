@@ -75,7 +75,7 @@ The alert shows the name of the machine (the "session host").
 
 | Alert | Sev | What it means | First step |
 |---|---|---|---|
-| health-check | 1 | A machine failed one of its self-checks. The alert names the check (for example DomainJoin or FSLogix). | Note the machine and the check. Escalate. The machine may need to be taken out of use. |
+| health-check | 1 | A machine has failed one of its self-checks for at least 5 minutes. The alert names the check (for example DomainJoin or FSLogix). A short failure while the machine starts is ignored. | Note the machine and the check. Escalate. The machine may need to be taken out of use. |
 | personal-unhealthy | 1 | The personal desktop of a user is unhealthy. The alert shows the user. | That user cannot work. Note the machine and the user, then escalate. |
 | agent-upgrade | 3 | The software that connects the machine to AVD failed to update or is stuck. | Note the machine. A restart of the machine often helps, but ask the administrator first. |
 | drained-idle | 3 | A machine has been closed to new users and empty for 24 hours, while still running and costing money. | Pass it on to the administrator: it can be switched off or put back into use. |

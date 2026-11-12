@@ -2,6 +2,13 @@
 
 All notable changes to the AVD monitoring baseline. Versions follow [semantic versioning](https://semver.org/).
 
+## 1.0.1 (2026-11-12)
+
+### Alerts
+
+- `healthCheckFailure` alerts only when a health check keeps failing for at least 5 minutes. A check that fails once while a session host starts, for example `DomainTrust` or `TURNRelayAccessHealthCheck`, no longer sends an alert.
+- The alert data now includes `FirstFailure`, `LastFailure` and `FailedHeartbeats`.
+
 ## 1.0.0 (2026-11-11)
 
 First public release.

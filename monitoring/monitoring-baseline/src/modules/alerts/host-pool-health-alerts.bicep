@@ -94,7 +94,7 @@ resource healthCheckFailure 'Microsoft.Insights/scheduledQueryRules@2023-12-01' 
   properties: queryRuleProperties(ruleContext, {
     alertId: 'healthCheckFailure'
     displayName: 'AVD session host health check failed (${hostPoolName})'
-    description: 'A session host health check failed. The health check name and host are in the alert dimensions, including checks 11 and 19.'
+    description: 'A session host health check has failed for at least 5 minutes. The health check name and host are in the alert dimensions, including checks 11 and 19. A check that fails once while the host starts does not alert.'
     severity: 1
     evaluationFrequency: 'PT15M'
     windowSize: 'PT15M'

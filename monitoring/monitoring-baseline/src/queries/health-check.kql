@@ -14,4 +14,7 @@ WVDAgentHealthStatus
 | extend HealthCheckDesc = CheckName(tolong(FailedCheck.HealthCheckName))
 | where HealthCheckDesc != 'InvalidIndex'
 | extend SessionHostRG = tostring(split(SessionHostResourceId, '/')[4])
-| project SessionHostName, SessionHostRG, HealthCheckDesc
+| summarize FirstFailure = min(TimeGenerated), LastFailure = max(TimeGenerated), FailedHeartbeats = count()
+    by SessionHostName, SessionHostRG, HealthCheckDesc
+// A check that fails once while the host starts is noise. Alert only when it keeps failing.
+| where LastFailure - FirstFailure >= 5m

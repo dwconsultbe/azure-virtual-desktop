@@ -119,7 +119,7 @@ Load = sessions ÷ (max sessions per host × available hosts). With autoscale, t
 
 | ID | Alert | Sev | Frequency / window | Data |
 | --- | --- | --- | --- | --- |
-| `healthCheckFailure` | A session host health check failed | 1 | 15 min / 15 min | `WVDAgentHealthStatus` |
+| `healthCheckFailure` | A session host health check fails for at least 5 minutes | 1 | 15 min / 15 min | `WVDAgentHealthStatus` |
 | `personalUnhealthy` | Assigned personal host unhealthy in 2 runs in a row (Personal only) | 1 | 5 min / 45 min | Collector |
 | `agentUpgrade` | AVD agent upgrade failed for 1 h or stuck for 2 h | 3 | 1 h / 1 h | `WVDAgentHealthStatus` |
 | `drainedIdle` | Host in drain mode, running and empty for 24 h | 3 | 1 h / 1 day | `WVDAgentHealthStatus` |
