@@ -1,7 +1,12 @@
 __COLLECTOR_ROWS__
-| where TimeGenerated > ago(20m)
+| where TimeGenerated > ago(40m)
 | where tostring(Fields[2]) == 'Pooled'
 | extend HostPoolPercentLoad = toreal(Fields[9])
-| summarize arg_max(TimeGenerated, *) by HostPoolResourceId
 | where isnotnull(HostPoolPercentLoad)
+// Take the lower load of the last two collector runs (15 minutes apart), so a short peak does not alert.
+| sort by HostPoolResourceId asc, TimeGenerated desc
+| extend Run = row_number(1, prev(HostPoolResourceId) != HostPoolResourceId)
+| where Run <= 2
+| summarize Runs = count(), HostPoolPercentLoad = min(HostPoolPercentLoad), HostPoolName = take_any(HostPoolName) by HostPoolResourceId
+| where Runs == 2
 | project HostPoolName, HostPoolPercentLoad

@@ -1,6 +1,9 @@
 AzureDiagnostics
-| where TimeGenerated > ago(30m)
+| where TimeGenerated > ago(45m)
 | where ResourceProvider == 'MICROSOFT.AUTOMATION' and Category == 'JobLogs'
 | where RunbookName_s in~ (__RUNBOOKS__)
 | where ResultType in~ ('Failed', 'Suspended')
-| project RunbookName_s, ResultType
+// One failed job can be a short Azure hiccup. collectorStale covers a collector that stops completely.
+| summarize FailedJobs = dcount(JobId_g), LastFailure = max(TimeGenerated) by RunbookName_s
+| where FailedJobs >= 2
+| project RunbookName_s, FailedJobs, LastFailure

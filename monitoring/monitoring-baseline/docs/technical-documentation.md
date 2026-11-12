@@ -50,7 +50,7 @@ Deploying? Use the [administrator guide](administrator-guide.md). Handling alert
 | `hostPoolType` decides the **pool-specific rules** | Pooled pools get capacity alerts. Personal pools get the unhealthy assigned host alert. |
 | Alerts are **stateful** (auto-resolve) | One e-mail when a problem starts and one when it is resolved, not one every evaluation. |
 | The DCR is a **prerequisite**, not part of the deployment | Many environments already have one through AVD Insights. A second DCR would ingest and bill the same data twice. |
-| Collectors **keep going** when one host pool or storage account fails | The other pools still report; the job still fails at the end, so `collectorFailed` fires. |
+| Collectors **keep going** when one host pool or storage account fails | The other pools still report; the job still fails at the end, so `collectorFailed` fires after the second failed run. |
 
 ## Naming
 
@@ -97,7 +97,7 @@ Frequency = how often the rule runs. Window = how much data it looks at.
 
 | ID | Alert | Sev | Frequency / window | Data |
 | --- | --- | --- | --- | --- |
-| `collectorFailed` | Collector runbook job failed or suspended | 2 | 15 min / 30 min | Automation job logs |
+| `collectorFailed` | Two collector runbook jobs failed or suspended | 2 | 15 min / 45 min | Automation job logs |
 | `collectorStale` | No collector output for 45 minutes | 2 | 15 min / 2 h | Collector output |
 | `diagnosticDataMissing` | Collector sees sessions, but no AVD agent health data for 1 hour | 2 | 15 min / 1 h | Collector + `WVDAgentHealthStatus` |
 
@@ -107,9 +107,9 @@ Frequency = how often the rule runs. Window = how much data it looks at.
 
 | ID | Alert | Sev | Frequency / window | Data |
 | --- | --- | --- | --- | --- |
-| `capacity50` | Host pool load 50% to 85% (Pooled only) | 3 | 5 min / 30 min | Collector |
-| `capacity85` | Host pool load 85% to 95% (Pooled only) | 2 | 5 min / 30 min | Collector |
-| `capacity95` | Host pool load 95% or more (Pooled only) | 1 | 5 min / 30 min | Collector |
+| `capacity50` | Host pool load 50% to 85% in the last two collector runs (Pooled only) | 3 | 5 min / 45 min | Collector |
+| `capacity85` | Host pool load 85% to 95% in the last two collector runs (Pooled only) | 2 | 5 min / 45 min | Collector |
+| `capacity95` | Host pool load 95% or more in the last two collector runs (Pooled only) | 1 | 5 min / 45 min | Collector |
 | `connectionFailure` | 5+ failed connections from 3+ users with the same error in 15 min | 3 | 15 min / 15 min | `WVDConnections`, `WVDErrors` |
 | `noResourcesAvailable` | Connections failed because no session host was available (one alert per host pool) | 1 | 15 min / 15 min | `WVDConnections`, `WVDErrors` |
 
@@ -129,8 +129,8 @@ Load = sessions ÷ (max sessions per host × available hosts). With autoscale, t
 
 | ID | Alert | Sev | Frequency / window | Data |
 | --- | --- | --- | --- | --- |
-| `cpu85` | Average CPU 85% or more | 2 | 30 min / 1 h | `Perf` |
-| `cpu95` | Average CPU 95% or more | 1 | 5 min / 15 min | `Perf` |
+| `cpu85` | Average CPU 85% or more, first 10 minutes after start ignored | 2 | 30 min / 1 h | `Perf` |
+| `cpu95` | Average CPU 95% or more, first 10 minutes after start ignored | 1 | 5 min / 15 min | `Perf` |
 | `memory2GB` | Available memory 2 GB or less | 2 | 5 min / 15 min | `Perf` |
 | `memory1GB` | Available memory 1 GB or less | 1 | 5 min / 15 min | `Perf` |
 | `localDiskFree10` | A drive (except `D:`) has 10% free or less | 2 | 15 min / 15 min | `Perf` |

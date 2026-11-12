@@ -41,11 +41,12 @@ var diskThresholds = [
 var localDiskQuery = fillQuery(loadTextContent('../../queries/local-disk.kql'), queryValues)
 
 var cpuThresholds = [
-  { id: 'cpu85', threshold: 85, severity: 2, evaluationFrequency: 'PT30M', windowSize: 'PT1H' }
-  { id: 'cpu95', threshold: 95, severity: 1, evaluationFrequency: 'PT5M', windowSize: 'PT15M' }
+  { id: 'cpu85', threshold: 85, severity: 2, evaluationFrequency: 'PT30M', windowSize: 'PT1H', lookback: '1h' }
+  { id: 'cpu95', threshold: 95, severity: 1, evaluationFrequency: 'PT5M', windowSize: 'PT15M', lookback: '15m' }
 ]
 
-var cpuQuery = fillQuery(loadTextContent('../../queries/cpu-usage.kql'), queryValues)
+var cpuQueryTemplate = loadTextContent('../../queries/cpu-usage.kql')
+var cpuQueries = toObject(cpuThresholds, alert => alert.id, alert => fillQuery(cpuQueryTemplate, union(queryValues, { __WINDOW__: alert.lookback })))
 
 resource localDiskAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [for alert in diskThresholds: {
   name: '${alertNamePrefix}-${hostPoolName}-${alert.id}-${uniqueString(hostPoolResourceId)}'
@@ -74,11 +75,11 @@ resource cpuAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [for al
   properties: queryRuleProperties(ruleContext, {
     alertId: alert.id
     displayName: 'AVD session host CPU above ${alert.threshold}% (${hostPoolName})'
-    description: 'A session host has average CPU usage at or above ${alert.threshold}%. The alert value is the average CPU percentage.'
+    description: 'A session host has average CPU usage at or above ${alert.threshold}%. The first 10 minutes after a host starts are ignored. The alert value is the average CPU percentage.'
     severity: alert.severity
     evaluationFrequency: alert.evaluationFrequency
     windowSize: alert.windowSize
-    query: '${cpuQuery}\n| where CpuPercent >= ${alert.threshold}'
+    query: '${cpuQueries[alert.id]}\n| where CpuPercent >= ${alert.threshold}'
     dimensions: ['SessionHostName']
     timeAggregation: 'Maximum'
     metricMeasureColumn: 'CpuPercent'

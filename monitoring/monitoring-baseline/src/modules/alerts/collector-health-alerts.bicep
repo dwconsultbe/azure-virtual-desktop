@@ -37,10 +37,10 @@ var collectorAlerts = [
     alertId: 'collectorFailed'
     shortName: 'collector-failed'
     displayName: 'AVD collector runbook job failed'
-    description: 'A collector runbook job failed or was suspended. Alerts that depend on collector output stop updating until the next successful run. Check the job Errors and Warnings in the Automation Account.'
+    description: 'At least two collector runbook jobs failed or were suspended in 45 minutes. Alerts that depend on collector output stop updating until the next successful run. Check the job Errors and Warnings in the Automation Account.'
     severity: 2
     evaluationFrequency: 'PT15M'
-    windowSize: 'PT30M'
+    windowSize: 'PT45M'
     query: jobFailedQuery
     dimensions: ['RunbookName_s']
   }

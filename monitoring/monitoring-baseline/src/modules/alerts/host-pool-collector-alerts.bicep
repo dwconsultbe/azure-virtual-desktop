@@ -43,10 +43,10 @@ resource capacityAlerts 'Microsoft.Insights/scheduledQueryRules@2023-12-01' = [f
   properties: queryRuleProperties(ruleContext, {
     alertId: band.id
     displayName: 'AVD host pool capacity at least ${band.lower}% (${hostPoolName})'
-    description: 'Latest collector run reports host pool load at or above ${band.lower}%. The alert value is the load percentage. Check session capacity, unavailable hosts and autoscale.'
+    description: 'The last two collector runs, 15 minutes apart, both report host pool load at or above ${band.lower}%. The alert value is the load percentage. Check session capacity, unavailable hosts and autoscale.'
     severity: band.severity
     evaluationFrequency: 'PT5M'
-    windowSize: 'PT30M'
+    windowSize: 'PT45M'
     query: '${capacityQuery}\n| where HostPoolPercentLoad >= ${band.lower}${band.lower == 95 ? '' : ' and HostPoolPercentLoad < ${band.upper}'}'
     dimensions: ['HostPoolName']
     timeAggregation: 'Maximum'

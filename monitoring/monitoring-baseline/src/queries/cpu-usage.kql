@@ -1,10 +1,15 @@
 __HOST_POOL_VMS__
-Perf
-| where TimeGenerated > ago(1h)
+let Samples = Perf
+| where TimeGenerated > ago(__WINDOW__)
 | where ObjectName in~ ('Processor', 'Processor Information')
 | where CounterName == '% Processor Time'
 | where InstanceName in~ ('_Total', '_total')
-| extend VMResourceId = tolower(_ResourceId)
-| summarize CpuPercent = round(avg(CounterValue), 1) by VMResourceId
+| extend VMResourceId = tolower(_ResourceId);
+// A host that starts during the window is busy booting. Skip its first 10 minutes.
+Samples
+| join kind=inner (Samples | summarize FirstSample = min(TimeGenerated) by VMResourceId) on VMResourceId
+| where FirstSample < ago(__WINDOW__) + 5m or TimeGenerated >= FirstSample + 10m
+| summarize CpuPercent = round(avg(CounterValue), 1), From = min(TimeGenerated), To = max(TimeGenerated) by VMResourceId
+| where To - From >= 4m
 | join kind=inner HostPoolVMs on VMResourceId
 | project SessionHostName, CpuPercent

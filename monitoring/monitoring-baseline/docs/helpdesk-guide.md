@@ -55,7 +55,7 @@ If these alerts fire, other alerts may stay silent without anyone noticing. Trea
 
 | Alert | Sev | What it means | First step |
 |---|---|---|---|
-| collector-failed | 2 | One of the two small scripts that gather the data (the "collectors") failed. | Open the Automation Account, go to **Jobs** and note the error of the failed job. Escalate. |
+| collector-failed | 2 | One of the two small scripts that gather the data (the "collectors") failed at least twice in 45 minutes. | Open the Automation Account, go to **Jobs** and note the error of the failed job. Escalate. |
 | collector-stale | 2 | A collector has not delivered data for 45 minutes. | Check in the Automation Account that the schedules are on and that jobs are running. Escalate if they are not. |
 | diagnostic-data-missing | 2 | Users are connected, but the health data of the desktops is not arriving. Many other alerts are blind meanwhile. | Escalate. The administrator must check the diagnostic settings of the host pool. |
 
@@ -65,9 +65,9 @@ If these alerts fire, other alerts may stay silent without anyone noticing. Trea
 |---|---|---|---|
 | no-resources | 1 | Users could not connect because no healthy desktop machine was available. One e-mail per host pool; the alert shows how many users were refused, with some names. | Users cannot work. Check the host alerts below and escalate. |
 | connection-failure | 3 | Several users failed to connect, with the same error. | Ask the affected users what they see, note the error code in the alert and escalate if it continues. |
-| capacity-50 | 3 | The environment is 50% to 85% full. | Nothing to do now. Keep an eye on it. |
-| capacity-85 | 2 | The environment is 85% to 95% full. | Check that extra machines are starting. Escalate if the number of users keeps growing. |
-| capacity-95 | 1 | The environment is 95% full or more. New users may be refused. | Escalate right away. More capacity is needed. |
+| capacity-50 | 3 | The environment has been 50% to 85% full for about 15 minutes. | Nothing to do now. Keep an eye on it. |
+| capacity-85 | 2 | The environment has been 85% to 95% full for about 15 minutes. | Check that extra machines are starting. Escalate if the number of users keeps growing. |
+| capacity-95 | 1 | The environment has been 95% full or more for about 15 minutes. New users may be refused. | Escalate right away. More capacity is needed. |
 
 ### A desktop machine has a problem
 
