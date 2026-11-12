@@ -2,20 +2,17 @@
 
 All notable changes to the AVD monitoring baseline. Versions follow [semantic versioning](https://semver.org/).
 
-## 1.0.2 (2026-11-12)
-
-### Alerts
-
-- `cpu85` and `cpu95` ignore the first 10 minutes after a session host starts. Booting no longer looks like high CPU.
-- The capacity alerts use the lower load of the last two collector runs, about 15 minutes apart. A short peak, for example before the scaling plan starts extra hosts, no longer sends an alert.
-- `collectorFailed` alerts after two failed or suspended jobs in 45 minutes instead of one. `collectorStale` still reports a collector that stops completely.
-
 ## 1.0.1 (2026-11-12)
+
+Fewer alerts for short problems, for example while a session host starts.
 
 ### Alerts
 
 - `healthCheckFailure` alerts only when a health check keeps failing for at least 5 minutes. A check that fails once while a session host starts, for example `DomainTrust` or `TURNRelayAccessHealthCheck`, no longer sends an alert.
-- The alert data now includes `FirstFailure`, `LastFailure` and `FailedHeartbeats`.
+- The `healthCheckFailure` alert data now includes `FirstFailure`, `LastFailure` and `FailedHeartbeats`.
+- `cpu85` and `cpu95` ignore the first 10 minutes after a session host starts. Booting no longer looks like high CPU.
+- The capacity alerts use the lower load of the last two collector runs, about 15 minutes apart. A short peak, for example before the scaling plan starts extra hosts, no longer sends an alert.
+- `collectorFailed` alerts after two failed or suspended jobs in 45 minutes instead of one. `collectorStale` still reports a collector that stops completely.
 
 ## 1.0.0 (2026-11-11)
 
